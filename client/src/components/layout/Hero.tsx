@@ -18,9 +18,7 @@ export default function Hero() {
       <h1 className="font-cinzel font-bold tracking-[6px] text-white leading-none
                      text-[clamp(38px,7vw,78px)]
                      [text-shadow:0_2px_30px_rgba(74,138,181,0.5)]">
-        VENCEDORES
-        <br />
-        <span className="text-gold-light">{t.heroTitle}</span>
+        Vencedores
       </h1>
       <p className="font-playfair italic text-base text-white/50 mt-3">
         {t.heroTagline}
