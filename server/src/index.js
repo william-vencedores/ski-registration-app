@@ -31,10 +31,22 @@ app.use('/api/payment',      paymentRoutes)
 app.use('/api/registration', registrationRoutes)
 app.use('/api/admin',        adminRoutes)
 
+// ─── Serve static frontend (production) ──────────────────────────────────
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const clientDist = path.join(__dirname, '..', 'public')
+app.use(express.static(clientDist))
+
 // ─── Health check ──────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 )
+
+// ─── SPA fallback (must be after API routes) ─────────────────────────────
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(clientDist, 'index.html'))
+})
 
 app.listen(PORT, () => {
   console.log(`\n🏔️  Vencedores API  →  http://localhost:${PORT}`)
