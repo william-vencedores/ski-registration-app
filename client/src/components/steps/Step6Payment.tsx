@@ -24,7 +24,7 @@ function PaymentForm() {
   const stripe = useStripe()
   const elements = useElements()
   const { t } = useTranslation()
-  const { selectedEvent, formData, setCurrentStep, setConfirmationId } = useAppStore()
+  const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId } = useAppStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -73,6 +73,7 @@ function PaymentForm() {
           eventId: selectedEvent.id,
           paymentIntentId: paymentIntent.id,
           totalPaid: total,
+          disclosureAcceptances,
         })
 
         setConfirmationId(paymentIntent.id.slice(-8).toUpperCase())

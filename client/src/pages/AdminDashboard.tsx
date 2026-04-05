@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminStore } from '../lib/adminStore'
-import { useRegistrations, type Registration } from '../lib/adminApi'
-import { EVENTS } from '../lib/events'
+import { useRegistrations, useAdminEvents, type Registration } from '../lib/adminApi'
 import StatsCards from '../components/admin/StatsCards'
 import RegistrationDetail from '../components/admin/RegistrationDetail'
 import logo from '../assets/logo.jpeg'
@@ -20,6 +19,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Registration | null>(null)
 
+  const { data: events } = useAdminEvents()
   const { data, loading, error, refetch } = useRegistrations(eventFilter || undefined)
 
   const handleLogout = () => {
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
             >
               Todos los Eventos
             </button>
-            {EVENTS.map((ev) => (
+            {events.map((ev) => (
               <button
                 key={ev.id}
                 onClick={() => setEventFilter(ev.id)}

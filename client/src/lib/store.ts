@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Lang } from './i18n'
-import type { SkiEvent, FormData } from './events'
+import type { SkiEvent, FormData, DisclosureAcceptance } from './events'
 import { initialFormData } from './events'
 
 interface AppStore {
@@ -19,6 +19,9 @@ interface AppStore {
 
   confirmationId: string
   setConfirmationId: (id: string) => void
+
+  disclosureAcceptances: DisclosureAcceptance[]
+  setDisclosureAcceptances: (acceptances: DisclosureAcceptance[]) => void
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -33,8 +36,11 @@ export const useAppStore = create<AppStore>((set) => ({
 
   formData: initialFormData,
   setFormData: (data) => set((state) => ({ formData: { ...state.formData, ...data } })),
-  resetForm: () => set({ formData: initialFormData, currentStep: 0, confirmationId: '' }),
+  resetForm: () => set({ formData: initialFormData, currentStep: 0, confirmationId: '', disclosureAcceptances: [] }),
 
   confirmationId: '',
   setConfirmationId: (id) => set({ confirmationId: id }),
+
+  disclosureAcceptances: [],
+  setDisclosureAcceptances: (acceptances) => set({ disclosureAcceptances: acceptances }),
 }))

@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '../../hooks/useTranslation'
 import { useAppStore } from '../../lib/store'
-import { EVENTS, type SkiEvent } from '../../lib/events'
+import { useEvents, type SkiEvent } from '../../lib/events'
 
 export default function EventSelector() {
   const { t, lang } = useTranslation()
   const { selectedEvent, setSelectedEvent, setCurrentStep } = useAppStore()
+  const { events, loading } = useEvents()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -43,6 +44,7 @@ export default function EventSelector() {
         {/* Trigger */}
         <button
           onClick={() => setOpen((o) => !o)}
+          disabled={loading}
           className={`w-full flex items-center gap-3.5 px-5 py-4 text-left
             rounded-2xl border-[1.5px] transition-all duration-200
             bg-midnight/78 backdrop-blur-xl text-white
@@ -56,8 +58,10 @@ export default function EventSelector() {
             {selectedEvent ? selectedEvent.icon : '🎿'}
           </span>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-[15px] truncate">{name}</div>
-            <div className="text-xs text-glacier mt-0.5 truncate">{meta}</div>
+            <div className="font-semibold text-[15px] truncate">
+              {loading ? 'Cargando eventos...' : name}
+            </div>
+            <div className="text-xs text-glacier mt-0.5 truncate">{loading ? '' : meta}</div>
           </div>
           {selectedEvent && (
             <span className="font-cinzel text-base font-semibold text-gold-light flex-shrink-0">
@@ -76,7 +80,7 @@ export default function EventSelector() {
             border-[1.5px] border-t-0 border-glacier/40
             rounded-b-2xl overflow-hidden
             shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
-            {EVENTS.map((ev) => (
+            {events.map((ev) => (
               <button
                 key={ev.id}
                 onClick={() => handleSelect(ev)}

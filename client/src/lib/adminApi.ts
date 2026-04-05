@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
+import type { SkiEvent, Disclosure } from './events'
 
 export interface Registration {
   id: string
@@ -41,6 +42,15 @@ export interface Stats {
     revenue: number
   }>
 }
+
+export interface AdminUser {
+  username: string
+  displayName: string
+  createdAt: string
+  lastLogin: string
+}
+
+// ── Registrations ──────────────────────────────────────────
 
 export function useRegistrations(eventId?: string) {
   const [data, setData] = useState<Registration[]>([])
@@ -87,5 +97,153 @@ export async function toggleAttendance(id: string, attended: boolean) {
 
 export async function resendEmail(id: string) {
   const res = await axios.post(`/api/admin/registrations/${id}/email`)
+  return res.data
+}
+
+// ── Events (Admin) ─────────────────────────────────────────
+
+export function useAdminEvents() {
+  const [data, setData] = useState<SkiEvent[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetch = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await axios.get('/api/events', { params: { activeOnly: false } })
+      setData(res.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { data, loading, refetch: fetch }
+}
+
+export async function createEvent(event: Partial<SkiEvent>) {
+  const res = await axios.post('/api/admin/events', event)
+  return res.data
+}
+
+export async function updateEvent(id: string, event: Partial<SkiEvent>) {
+  const res = await axios.put(`/api/admin/events/${id}`, event)
+  return res.data
+}
+
+export async function deleteEvent(id: string) {
+  const res = await axios.delete(`/api/admin/events/${id}`)
+  return res.data
+}
+
+// ── Disclosures (Admin) ────────────────────────────────────
+
+export function useDisclosures() {
+  const [data, setData] = useState<Disclosure[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetch = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await axios.get('/api/admin/disclosures')
+      setData(res.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { data, loading, refetch: fetch }
+}
+
+export async function createDisclosure(disclosure: Partial<Disclosure>) {
+  const res = await axios.post('/api/admin/disclosures', disclosure)
+  return res.data
+}
+
+export async function updateDisclosure(id: string, disclosure: Partial<Disclosure>) {
+  const res = await axios.put(`/api/admin/disclosures/${id}`, disclosure)
+  return res.data
+}
+
+export async function deleteDisclosure(id: string) {
+  const res = await axios.delete(`/api/admin/disclosures/${id}`)
+  return res.data
+}
+
+// ── Event-Disclosure linking ───────────────────────────────
+
+export async function attachDisclosure(eventId: string, disclosureId: string, displayOrder: number = 0) {
+  const res = await axios.post(`/api/admin/events/${eventId}/disclosures`, { disclosureId, displayOrder })
+  return res.data
+}
+
+export async function detachDisclosure(eventId: string, disclosureId: string) {
+  const res = await axios.delete(`/api/admin/events/${eventId}/disclosures/${disclosureId}`)
+  return res.data
+}
+
+export function useEventDisclosuresAdmin(eventId: string | undefined) {
+  const [data, setData] = useState<Disclosure[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!eventId) { setData([]); return }
+    setLoading(true)
+    try {
+      const res = await axios.get(`/api/events/${eventId}/disclosures`)
+      setData(res.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [eventId])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { data, loading, refetch: fetch }
+}
+
+// ── Admin Users ────────────────────────────────────────────
+
+export function useAdminUsers() {
+  const [data, setData] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetch = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await axios.get('/api/admin/users')
+      setData(res.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetch() }, [fetch])
+
+  return { data, loading, refetch: fetch }
+}
+
+export async function createAdminUser(user: { username: string; password: string; displayName?: string }) {
+  const res = await axios.post('/api/admin/users', user)
+  return res.data
+}
+
+export async function updateAdminUser(username: string, data: { password?: string; displayName?: string }) {
+  const res = await axios.put(`/api/admin/users/${username}`, data)
+  return res.data
+}
+
+export async function deleteAdminUser(username: string) {
+  const res = await axios.delete(`/api/admin/users/${username}`)
   return res.data
 }

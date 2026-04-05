@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+
 export interface SkiEvent {
   id: string
   icon: string
@@ -10,33 +13,24 @@ export interface SkiEvent {
   badge?: boolean
   badgeEs?: string
   badgeEn?: string
+  active?: boolean
 }
 
-export const EVENTS: SkiEvent[] = [
-  {
-    id: 'venc2027',
-    icon: '⛷️',
-    nameEs: 'Vencedores en la Nieve 2027',
-    nameEn: 'Vencedores on the Snow 2027',
-    metaEs: 'Febrero 2027 · Ubicación por confirmar',
-    metaEn: 'February 2027 · Location TBC',
-    price: 150,
-    processing: 4.35,
-    badge: true,
-    badgeEs: 'Próximo',
-    badgeEn: 'Upcoming',
-  },
-  {
-    id: 'venc2028',
-    icon: '🏔️',
-    nameEs: 'Vencedores en la Nieve 2028',
-    nameEn: 'Vencedores on the Snow 2028',
-    metaEs: 'Febrero 2028 · Inscripciones abren pronto',
-    metaEn: 'February 2028 · Registration opening soon',
-    price: 155,
-    processing: 4.50,
-  },
-]
+export interface Disclosure {
+  id: string
+  version: number
+  titleEs: string
+  titleEn: string
+  contentEs: string
+  contentEn: string
+  required: boolean
+  displayOrder?: number
+}
+
+export interface DisclosureAcceptance {
+  disclosureId: string
+  version: number
+}
 
 export interface FormData {
   // Step 1
@@ -75,4 +69,39 @@ export const initialFormData: FormData = {
   medAllergies: 'no', allergyDetails: '',
   medMedications: 'no', medicationDetails: '',
   liabilityAccepted: false, medicalAccepted: false, signature: '',
+}
+
+// Fetch events from API
+export function useEvents() {
+  const [events, setEvents] = useState<SkiEvent[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    axios.get('/api/events')
+      .then((res) => setEvents(res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  return { events, loading }
+}
+
+// Fetch disclosures for an event
+export function useEventDisclosures(eventId: string | undefined) {
+  const [disclosures, setDisclosures] = useState<Disclosure[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!eventId) {
+      setDisclosures([])
+      return
+    }
+    setLoading(true)
+    axios.get(`/api/events/${eventId}/disclosures`)
+      .then((res) => setDisclosures(res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [eventId])
+
+  return { disclosures, loading }
 }
