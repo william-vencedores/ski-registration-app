@@ -36,6 +36,7 @@ public class SubmitRegistrationRequest {
     private String eventId;
     private String paymentIntentId;
     private double totalPaid;
+    private double totalOwed;
     // Disclosure acceptances
     private List<DisclosureAcceptanceInput> disclosureAcceptances;
 }

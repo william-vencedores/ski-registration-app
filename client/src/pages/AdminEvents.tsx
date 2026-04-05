@@ -8,11 +8,18 @@ import {
   deleteEvent,
 } from '../lib/adminApi'
 import type { SkiEvent } from '../lib/events'
+
+function badgeClasses(text?: string): string {
+  if (text === 'Lleno') return 'bg-red-500/20 text-red-400 border border-red-500/30'
+  if (text === 'Últimos Cupos') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+  return 'bg-pine/50 text-[#7ddc9a] border border-[rgba(125,220,154,0.3)]'
+}
+import LocationPicker from '../components/admin/LocationPicker'
 import logo from '../assets/logo.jpeg'
 
 const emptyEvent: Partial<SkiEvent> = {
   id: '', name: '', date: '', location: '', price: 0,
-  badge: false, badgeText: '', active: true,
+  badge: false, badgeText: '', active: true, capacity: 0, deposit: 0,
 }
 
 function toSlug(text: string): string {
@@ -154,6 +161,7 @@ export default function AdminEvents() {
                   </div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     ID: {ev.id} · ${ev.price}
+                    {ev.capacity ? ` · ${ev.spotsLeft}/${ev.capacity} spots left` : ' · Unlimited'}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -208,22 +216,22 @@ export default function AdminEvents() {
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
                              text-white text-sm focus:outline-none focus:border-glacier" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Date</label>
-                  <input value={editing.date || ''} onChange={(e) => set('date', e.target.value)}
-                    placeholder="February 2027"
-                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
-                               text-white text-sm focus:outline-none focus:border-glacier" />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Location</label>
-                  <input value={editing.location || ''} onChange={(e) => set('location', e.target.value)}
-                    placeholder="Aspen, Colorado"
-                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
-                               text-white text-sm focus:outline-none focus:border-glacier" />
-                </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Date</label>
+                <input type="date" value={editing.date || ''}
+                  onChange={(e) => set('date', e.target.value)}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                             text-white text-sm focus:outline-none focus:border-glacier
+                             [color-scheme:dark]" />
               </div>
+              <LocationPicker
+                location={editing.location || ''}
+                lat={editing.lat}
+                lng={editing.lng}
+                onChange={(location, lat, lng) => {
+                  setEditing((prev) => prev ? { ...prev, location, lat, lng } : prev)
+                }}
+              />
 
               <div>
                 <label className="text-[10px] text-slate-400 uppercase tracking-wider">Price ($)</label>
@@ -237,28 +245,98 @@ export default function AdminEvents() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Badge Text</label>
-                <input value={editing.badgeText || ''} onChange={(e) => set('badgeText', e.target.value)}
-                  placeholder="Upcoming"
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Deposit ($)</label>
+                <input type="number" step="0.01" min="0" value={editing.deposit || 0}
+                  onChange={(e) => set('deposit', parseFloat(e.target.value) || 0)}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
                              text-white text-sm focus:outline-none focus:border-glacier" />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Minimum partial payment to reserve a spot. Set to 0 to require full payment.
+                </p>
               </div>
 
-              <div className="flex gap-6 mt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={editing.active ?? true}
-                    onChange={(e) => set('active', e.target.checked)}
-                    className="w-4 h-4 rounded accent-glacier cursor-pointer" />
-                  <span className="text-xs text-slate-300">Active</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={editing.badge ?? false}
-                    onChange={(e) => set('badge', e.target.checked)}
-                    className="w-4 h-4 rounded accent-glacier cursor-pointer" />
-                  <span className="text-xs text-slate-300">Show badge</span>
-                </label>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Capacity</label>
+                <input type="number" min="0" value={editing.capacity || 0}
+                  onChange={(e) => set('capacity', parseInt(e.target.value) || 0)}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                             text-white text-sm focus:outline-none focus:border-glacier" />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Max registrations. Set to 0 for unlimited.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Badge</label>
+                  <select
+                    value={editing.badge ? (editing.badgeText || '') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setEditing((prev) => prev ? {
+                        ...prev,
+                        badge: val !== '',
+                        badgeText: val,
+                      } : prev)
+                    }}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                               text-white text-sm focus:outline-none focus:border-glacier
+                               [color-scheme:dark]"
+                  >
+                    <option value="" className="bg-[#0d1a2d] text-white">Ninguno</option>
+                    <option value="Próximo" className="bg-[#0d1a2d] text-white">Próximo</option>
+                    <option value="Nuevo" className="bg-[#0d1a2d] text-white">Nuevo</option>
+                    <option value="Precio Especial" className="bg-[#0d1a2d] text-white">Precio Especial</option>
+                    <option value="Lleno" className="bg-[#0d1a2d] text-white">Lleno</option>
+                    <option value="Últimos Cupos" className="bg-[#0d1a2d] text-white">Últimos Cupos</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Status</label>
+                  <select
+                    value={editing.active ? 'active' : 'inactive'}
+                    onChange={(e) => set('active', e.target.value === 'active')}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                               text-white text-sm focus:outline-none focus:border-glacier"
+                  >
+                    <option value="active" className="bg-[#0d1a2d] text-white">Active</option>
+                    <option value="inactive" className="bg-[#0d1a2d] text-white">Inactive</option>
+                  </select>
+                </div>
               </div>
             </div>
+
+            {/* Live Preview */}
+            {editing.name && (
+              <div className="mt-4">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Preview</label>
+                <div className="mt-1 rounded-2xl border-[1.5px] border-glacier/40
+                                bg-midnight/78 backdrop-blur-xl p-4 flex items-center gap-3.5">
+                  <span className="text-2xl flex-shrink-0">🎿</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-[15px] text-white flex items-center gap-2">
+                      {editing.name}
+                      {editing.badge && editing.badgeText && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${badgeClasses(editing.badgeText)}`}>
+                          {editing.badgeText}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-glacier mt-0.5">
+                      {[
+                        editing.date ? new Date(editing.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '',
+                        editing.location,
+                      ].filter(Boolean).join(' · ') || 'Date · Location'}
+                    </div>
+                  </div>
+                  {(editing.price ?? 0) > 0 && (
+                    <span className="font-cinzel text-base font-semibold text-gold-light flex-shrink-0">
+                      ${editing.price}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 mt-6 justify-end">
               <button onClick={close}

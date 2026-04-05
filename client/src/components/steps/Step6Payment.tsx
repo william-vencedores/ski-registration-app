@@ -24,12 +24,27 @@ function PaymentForm() {
   const stripe = useStripe()
   const elements = useElements()
   const { t } = useTranslation()
-  const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId } = useAppStore()
+  const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId, setPaymentInfo } = useAppStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
 
-  const processing = selectedEvent ? Math.round((selectedEvent.price * 0.029 + 0.30) * 100) / 100 : 0
-  const total = selectedEvent ? selectedEvent.price + processing : 0
+  const hasDeposit = selectedEvent && (selectedEvent.deposit ?? 0) > 0
+
+  // Base amounts
+  const fullPrice = selectedEvent?.price ?? 0
+  const depositPrice = selectedEvent?.deposit ?? 0
+  const baseAmount = paymentType === 'deposit' && hasDeposit ? depositPrice : fullPrice
+
+  // Processing fee on what they're paying now
+  const processing = Math.round((baseAmount * 0.029 + 0.30) * 100) / 100
+  const chargeTotal = baseAmount + processing
+
+  // Full total owed (for reference)
+  const fullProcessing = Math.round((fullPrice * 0.029 + 0.30) * 100) / 100
+  const fullTotal = fullPrice + fullProcessing
+
+  const remaining = paymentType === 'deposit' && hasDeposit ? fullTotal - chargeTotal : 0
 
   const handleSubmit = async () => {
     if (!stripe || !elements || !selectedEvent) return
@@ -40,9 +55,9 @@ function PaymentForm() {
       // Create payment intent on server
       const { data } = await axios.post('/api/payment/create-intent', {
         eventId: selectedEvent.id,
-        amount: Math.round(total * 100),
         email: formData.email,
         name: `${formData.firstName} ${formData.lastName}`,
+        partialPayment: paymentType === 'deposit',
       })
 
       const cardEl = elements.getElement(CardElement)
@@ -73,11 +88,13 @@ function PaymentForm() {
           ...formData,
           eventId: selectedEvent.id,
           paymentIntentId: paymentIntent.id,
-          totalPaid: total,
+          totalPaid: data.chargeAmount,
+          totalOwed: data.totalOwed,
           disclosureAcceptances,
         })
 
         setConfirmationId(paymentIntent.id.slice(-8).toUpperCase())
+        setPaymentInfo({ totalPaid: data.chargeAmount, totalOwed: data.totalOwed })
         setCurrentStep(6)
       }
     } catch (err: unknown) {
@@ -100,22 +117,72 @@ function PaymentForm() {
             <div className="font-semibold text-sm text-white">
               {selectedEvent.name}
             </div>
-            <div className="text-xs text-glacier">{[selectedEvent.date, selectedEvent.location].filter(Boolean).join(' · ')}</div>
+            <div className="text-xs text-glacier">{selectedEvent.location}</div>
           </div>
         </div>
+
+        {/* Payment type selector */}
+        {hasDeposit && (
+          <div className="bg-[#f0f5fa] px-5 py-3 flex gap-2 border-b border-black/8">
+            <button
+              type="button"
+              onClick={() => setPaymentType('full')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
+                ${paymentType === 'full'
+                  ? 'bg-white text-slate-900 border-glacier shadow-sm'
+                  : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
+            >
+              Pay Full Amount
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentType('deposit')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
+                ${paymentType === 'deposit'
+                  ? 'bg-white text-slate-900 border-glacier shadow-sm'
+                  : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
+            >
+              Pay Deposit
+            </button>
+          </div>
+        )}
+
         <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
-          <div className="flex justify-between text-sm text-slate-600">
-            <span>{t.feeSkier}</span>
-            <span>${selectedEvent.price.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-slate-600">
-            <span>{t.feeProcessing}</span>
-            <span>${processing.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
-            <span className="text-xs tracking-widest uppercase">{t.feeTotal}</span>
-            <span className="font-cinzel text-lg text-deep-sky">${total.toFixed(2)} USD</span>
-          </div>
+          {paymentType === 'deposit' && hasDeposit ? (
+            <>
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>Deposit</span>
+                <span>${depositPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>{t.feeProcessing}</span>
+                <span>${processing.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
+                <span className="text-xs tracking-widest uppercase">Due Now</span>
+                <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
+              </div>
+              <div className="flex justify-between text-xs text-amber-600 pt-1">
+                <span>Remaining balance</span>
+                <span>${remaining.toFixed(2)} USD</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>{t.feeSkier}</span>
+                <span>${fullPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>{t.feeProcessing}</span>
+                <span>${processing.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
+                <span className="text-xs tracking-widest uppercase">{t.feeTotal}</span>
+                <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -149,6 +216,8 @@ function PaymentForm() {
             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             {t.processing}
           </span>
+        ) : paymentType === 'deposit' && hasDeposit ? (
+          `Pay Deposit — $${chargeTotal.toFixed(2)}`
         ) : (
           t.payBtn
         )}

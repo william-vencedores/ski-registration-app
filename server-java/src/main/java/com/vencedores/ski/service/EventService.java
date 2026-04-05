@@ -39,10 +39,21 @@ public class EventService {
         item.put("name", s(req.getName()));
         item.put("date", s(req.getDate() != null ? req.getDate() : ""));
         item.put("location", s(req.getLocation() != null ? req.getLocation() : ""));
+        if (req.getLat() != null) item.put("lat", n(req.getLat()));
+        if (req.getLng() != null) item.put("lng", n(req.getLng()));
         item.put("price", n(req.getPrice()));
         item.put("badge", bool(req.isBadge()));
         item.put("badgeText", s(req.getBadgeText() != null ? req.getBadgeText() : ""));
         item.put("active", bool(req.isActive()));
+        if (req.getCapacity() != null) {
+            item.put("capacity", n(req.getCapacity()));
+            item.put("spotsLeft", n(req.getCapacity()));
+        }
+        if (req.getDeposit() != null) {
+            item.put("deposit", n(req.getDeposit()));
+        } else {
+            item.put("deposit", n(0));
+        }
         item.put("createdAt", s(now));
         item.put("updatedAt", s(now));
 
@@ -77,14 +88,52 @@ public class EventService {
         if (req.getName() != null) item.put("name", s(req.getName()));
         if (req.getDate() != null) item.put("date", s(req.getDate()));
         if (req.getLocation() != null) item.put("location", s(req.getLocation()));
+        if (req.getLat() != null) item.put("lat", n(req.getLat()));
+        if (req.getLng() != null) item.put("lng", n(req.getLng()));
         item.put("price", n(req.getPrice()));
         item.put("badge", bool(req.isBadge()));
         if (req.getBadgeText() != null) item.put("badgeText", s(req.getBadgeText()));
         item.put("active", bool(req.isActive()));
+        if (req.getCapacity() != null) {
+            int oldCapacity = (int) getNum(existing, "capacity");
+            int oldSpotsLeft = (int) getNum(existing, "spotsLeft");
+            int newCapacity = req.getCapacity();
+            int newSpotsLeft = Math.max(0, oldSpotsLeft + (newCapacity - oldCapacity));
+            item.put("capacity", n(newCapacity));
+            item.put("spotsLeft", n(newSpotsLeft));
+        }
+        if (req.getDeposit() != null) {
+            item.put("deposit", n(req.getDeposit()));
+        }
         item.put("updatedAt", s(now));
 
         repo.putItem(item);
         return itemToEventMap(item);
+    }
+
+    /**
+     * Atomically decrement spotsLeft. Throws if no spots available.
+     */
+    public void decrementSpotsLeft(String eventId) {
+        var event = getEvent(eventId);
+        int capacity = (int) event.get("capacity");
+        if (capacity == 0) return; // no capacity limit set
+
+        try {
+            repo.updateItemWithCondition(
+                    "EVENT#" + eventId, "METADATA",
+                    "SET spotsLeft = spotsLeft - :one, updatedAt = :now",
+                    Map.of(
+                            ":one", AttributeValue.builder().n("1").build(),
+                            ":zero", AttributeValue.builder().n("0").build(),
+                            ":now", s(java.time.Instant.now().toString())
+                    ),
+                    null,
+                    "spotsLeft > :zero"
+            );
+        } catch (software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException e) {
+            throw new BadRequestException("This event is sold out");
+        }
     }
 
     public void deleteEvent(String eventId) {
@@ -101,10 +150,17 @@ public class EventService {
         map.put("name", str(item, "name"));
         map.put("date", str(item, "date"));
         map.put("location", str(item, "location"));
+        map.put("lat", getNum(item, "lat"));
+        map.put("lng", getNum(item, "lng"));
         map.put("price", getNum(item, "price"));
         map.put("badge", getBool(item, "badge"));
         map.put("badgeText", str(item, "badgeText"));
         map.put("active", getBool(item, "active"));
+        int capacity = (int) getNum(item, "capacity");
+        int spotsLeft = (int) getNum(item, "spotsLeft");
+        map.put("capacity", capacity);
+        map.put("spotsLeft", spotsLeft);
+        map.put("deposit", getNum(item, "deposit"));
         map.put("createdAt", str(item, "createdAt"));
         map.put("updatedAt", str(item, "updatedAt"));
         return map;

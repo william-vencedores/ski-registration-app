@@ -6,10 +6,15 @@ export interface SkiEvent {
   name: string
   date: string
   location: string
+  lat?: number
+  lng?: number
   price: number
   badge?: boolean
   badgeText?: string
   active?: boolean
+  capacity?: number
+  spotsLeft?: number
+  deposit?: number
 }
 
 export interface Disclosure {

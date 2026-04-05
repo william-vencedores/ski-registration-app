@@ -24,9 +24,9 @@ public class PaymentController {
     @PostMapping("/create-intent")
     public ResponseEntity<?> createIntent(@RequestBody CreatePaymentIntentRequest req) {
         try {
-            String clientSecret = paymentService.createPaymentIntent(
-                    req.getEventId(), req.getEmail(), req.getName());
-            return ResponseEntity.ok(Map.of("clientSecret", clientSecret));
+            var result = paymentService.createPaymentIntent(
+                    req.getEventId(), req.getEmail(), req.getName(), req.isPartialPayment());
+            return ResponseEntity.ok(result);
         } catch (StripeException e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }

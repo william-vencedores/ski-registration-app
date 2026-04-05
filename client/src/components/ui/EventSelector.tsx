@@ -3,6 +3,23 @@ import { useTranslation } from '../../hooks/useTranslation'
 import { useAppStore } from '../../lib/store'
 import { useEvents, type SkiEvent } from '../../lib/events'
 
+function badgeClasses(text?: string): string {
+  if (text === 'Lleno') return 'bg-red-500/20 text-red-400 border border-red-500/30'
+  if (text === 'Últimos Cupos') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+  return 'bg-pine/50 text-[#7ddc9a] border border-[rgba(125,220,154,0.3)]'
+}
+
+function formatDate(date: string): string {
+  if (!date) return ''
+  try {
+    return new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+      month: 'long', year: 'numeric',
+    })
+  } catch {
+    return date
+  }
+}
+
 export default function EventSelector() {
   const { t } = useTranslation()
   const { selectedEvent, setSelectedEvent, setCurrentStep } = useAppStore()
@@ -30,7 +47,7 @@ export default function EventSelector() {
 
   const name = selectedEvent ? selectedEvent.name : t.evChoose
   const detail = selectedEvent
-    ? [selectedEvent.date, selectedEvent.location].filter(Boolean).join(' · ')
+    ? [formatDate(selectedEvent.date), selectedEvent.location].filter(Boolean).join(' · ')
     : t.evChooseMeta
 
   return (
@@ -79,9 +96,11 @@ export default function EventSelector() {
             {events.map((ev) => (
               <button
                 key={ev.id}
-                onClick={() => handleSelect(ev)}
+                onClick={() => !(ev.capacity && ev.spotsLeft === 0) && handleSelect(ev)}
+                disabled={!!(ev.capacity && ev.spotsLeft === 0)}
                 className={`w-full flex items-center gap-3.5 px-5 py-4 text-left
                   border-b border-white/6 last:border-0 transition-colors duration-150
+                  ${ev.capacity && ev.spotsLeft === 0 ? 'opacity-50 cursor-not-allowed' : ''}
                   ${selectedEvent?.id === ev.id ? 'bg-glacier/15' : 'hover:bg-glacier/12'}`}
               >
                 <span className="text-xl flex-shrink-0">🎿</span>
@@ -89,15 +108,19 @@ export default function EventSelector() {
                   <div className="font-semibold text-sm text-white flex items-center gap-2">
                     {ev.name}
                     {ev.badge && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full
-                        bg-pine/50 text-[#7ddc9a] border border-[rgba(125,220,154,0.3)]">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${badgeClasses(ev.badgeText)}`}>
                         {ev.badgeText}
                       </span>
                     )}
                   </div>
                   <div className="text-xs text-glacier mt-0.5">
-                    {[ev.date, ev.location].filter(Boolean).join(' · ')}
+                    {[formatDate(ev.date), ev.location].filter(Boolean).join(' · ')}
                   </div>
+                  {ev.capacity ? (
+                    <div className={`text-[10px] mt-0.5 ${ev.spotsLeft === 0 ? 'text-red-400' : ev.spotsLeft! <= 5 ? 'text-amber-400' : 'text-slate-500'}`}>
+                      {ev.spotsLeft === 0 ? 'Sold out' : `${ev.spotsLeft} spots left`}
+                    </div>
+                  ) : null}
                 </div>
                 <span className="font-cinzel text-sm text-gold-light flex-shrink-0">
                   ${ev.price}

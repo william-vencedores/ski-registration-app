@@ -181,7 +181,7 @@ export default function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/6">
-                    {['#ID', 'Name', 'Event', 'Level', 'Paid', 'Status', 'Date', ''].map((h) => (
+                    {['#ID', 'Name', 'Event', 'Level', 'Paid', 'Payment', 'Status', 'Date', ''].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-[10px] tracking-widest
                                               uppercase text-slate-500 font-semibold whitespace-nowrap">
                         {h}
@@ -232,6 +232,25 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span className="font-cinzel text-sm text-gold-light">
                           ${reg.totalPaid?.toFixed(2)}
+                        </span>
+                        {reg.totalOwed > 0 && reg.totalPaid < reg.totalOwed && (
+                          <span className="text-[10px] text-slate-500 block">
+                            / ${reg.totalOwed?.toFixed(2)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Payment status */}
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1
+                          rounded-full text-[10px] font-semibold border
+                          ${reg.paymentStatus === 'partial'
+                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                            : 'bg-pine/20 text-[#7ddc9a] border-pine/40'
+                          }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
+                            ${reg.paymentStatus === 'partial' ? 'bg-amber-400' : 'bg-[#7ddc9a]'}`} />
+                          {reg.paymentStatus === 'partial' ? 'Partial' : 'Paid'}
                         </span>
                       </td>
 

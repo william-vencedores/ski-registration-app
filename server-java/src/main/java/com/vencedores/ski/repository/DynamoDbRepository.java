@@ -103,6 +103,27 @@ public class DynamoDbRepository {
         client.updateItem(builder.build());
     }
 
+    public void updateItemWithCondition(String pk, String sk, String updateExpression,
+                                        Map<String, AttributeValue> expressionValues,
+                                        Map<String, String> expressionNames,
+                                        String conditionExpression) {
+        var builder = UpdateItemRequest.builder()
+                .tableName(tableName)
+                .key(Map.of(
+                        "PK", AttributeValue.builder().s(pk).build(),
+                        "SK", AttributeValue.builder().s(sk).build()
+                ))
+                .updateExpression(updateExpression)
+                .conditionExpression(conditionExpression)
+                .expressionAttributeValues(expressionValues);
+
+        if (expressionNames != null && !expressionNames.isEmpty()) {
+            builder.expressionAttributeNames(expressionNames);
+        }
+
+        client.updateItem(builder.build());
+    }
+
     public void deleteItem(String pk, String sk) {
         client.deleteItem(DeleteItemRequest.builder()
                 .tableName(tableName)

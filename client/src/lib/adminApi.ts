@@ -26,6 +26,8 @@ export interface Registration {
   medicalAccepted: boolean
   signature: string
   totalPaid: number
+  totalOwed: number
+  paymentStatus: 'paid' | 'partial' | ''
   attended?: boolean
   attendanceMarkedAt?: string
   attendanceMarkedBy?: string

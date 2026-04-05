@@ -3,14 +3,15 @@ import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 
 export default function SuccessScreen() {
-  const { formData, selectedEvent, confirmationId } = useAppStore()
+  const { formData, selectedEvent, confirmationId, paymentInfo } = useAppStore()
   const { t } = useTranslation()
 
-  const processing = selectedEvent ? Math.round((selectedEvent.price * 0.029 + 0.30) * 100) / 100 : 0
-  const total = selectedEvent ? selectedEvent.price + processing : 0
-  const eventName = selectedEvent
-    ? selectedEvent.name
-    : ''
+  const totalPaid = paymentInfo?.totalPaid ?? 0
+  const totalOwed = paymentInfo?.totalOwed ?? 0
+  const isPartial = totalOwed > 0 && totalPaid < totalOwed
+  const remaining = isPartial ? totalOwed - totalPaid : 0
+
+  const eventName = selectedEvent ? selectedEvent.name : ''
 
   return (
     <div className="text-center py-4 animate-pop-in">
@@ -41,7 +42,8 @@ export default function SuccessScreen() {
           { label: t.confName, value: `${formData.firstName} ${formData.lastName}` },
           { label: t.confEmail, value: formData.email },
           { label: t.confConf, value: confirmationId },
-          { label: t.confAmount, value: `$${total.toFixed(2)} USD` },
+          { label: isPartial ? 'Deposit Paid' : t.confAmount, value: `$${totalPaid.toFixed(2)} USD` },
+          ...(isPartial ? [{ label: 'Remaining Balance', value: `$${remaining.toFixed(2)} USD` }] : []),
           { label: t.confDate, value: new Date().toLocaleDateString() },
         ].map(({ label, value }) => (
           <div key={label} className="flex justify-between items-center px-5 py-3 border-b border-black/6 last:border-0">
@@ -50,6 +52,12 @@ export default function SuccessScreen() {
           </div>
         ))}
       </div>
+
+      {isPartial && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700 mb-6 text-left">
+          Your spot is reserved with a deposit. The remaining balance of <strong>${remaining.toFixed(2)}</strong> is due before the event.
+        </div>
+      )}
 
       <p className="font-playfair italic text-slate-500 text-sm leading-relaxed">
         {t.closingWord}

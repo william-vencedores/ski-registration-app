@@ -31,8 +31,9 @@ public class RegistrationService {
             throw new BadRequestException("Missing required fields");
         }
 
-        // Validate event exists
+        // Validate event exists and decrement spots
         var event = eventService.getEvent(req.getEventId());
+        eventService.decrementSpotsLeft(req.getEventId());
 
         String confirmationId = req.getPaymentIntentId()
                 .substring(req.getPaymentIntentId().length() - 8).toUpperCase();
@@ -77,6 +78,9 @@ public class RegistrationService {
         // Payment
         item.put("paymentIntentId", s(req.getPaymentIntentId()));
         item.put("totalPaid", n(req.getTotalPaid()));
+        item.put("totalOwed", n(req.getTotalOwed()));
+        String paymentStatus = req.getTotalPaid() >= req.getTotalOwed() ? "paid" : "partial";
+        item.put("paymentStatus", s(paymentStatus));
 
         repo.putItem(item);
 
@@ -247,6 +251,8 @@ public class RegistrationService {
         map.put("medicalAccepted", getBool(item, "medicalAccepted"));
         map.put("signature", str(item, "signature"));
         map.put("totalPaid", getNum(item, "totalPaid"));
+        map.put("totalOwed", getNum(item, "totalOwed"));
+        map.put("paymentStatus", str(item, "paymentStatus"));
         map.put("attended", getBool(item, "attended"));
         map.put("attendanceMarkedAt", str(item, "attendanceMarkedAt"));
         map.put("attendanceMarkedBy", str(item, "attendanceMarkedBy"));

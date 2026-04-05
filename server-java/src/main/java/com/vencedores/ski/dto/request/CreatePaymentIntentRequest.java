@@ -7,4 +7,5 @@ public class CreatePaymentIntentRequest {
     private String eventId;
     private String email;
     private String name;
+    private boolean partialPayment;
 }

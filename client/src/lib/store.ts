@@ -20,6 +20,9 @@ interface AppStore {
   confirmationId: string
   setConfirmationId: (id: string) => void
 
+  paymentInfo: { totalPaid: number; totalOwed: number } | null
+  setPaymentInfo: (info: { totalPaid: number; totalOwed: number }) => void
+
   disclosureAcceptances: DisclosureAcceptance[]
   setDisclosureAcceptances: (acceptances: DisclosureAcceptance[]) => void
 }
@@ -36,10 +39,13 @@ export const useAppStore = create<AppStore>((set) => ({
 
   formData: initialFormData,
   setFormData: (data) => set((state) => ({ formData: { ...state.formData, ...data } })),
-  resetForm: () => set({ formData: initialFormData, currentStep: 0, confirmationId: '', disclosureAcceptances: [] }),
+  resetForm: () => set({ formData: initialFormData, currentStep: 0, confirmationId: '', disclosureAcceptances: [], paymentInfo: null }),
 
   confirmationId: '',
   setConfirmationId: (id) => set({ confirmationId: id }),
+
+  paymentInfo: null,
+  setPaymentInfo: (info) => set({ paymentInfo: info }),
 
   disclosureAcceptances: [],
   setDisclosureAcceptances: (acceptances) => set({ disclosureAcceptances: acceptances }),

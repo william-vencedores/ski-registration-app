@@ -119,6 +119,17 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
               <Section title="Event & Payment">
                 <Row label="Event" value={reg.eventName} />
                 <Row label="Total Paid" value={`$${reg.totalPaid?.toFixed(2)} USD`} />
+                {reg.totalOwed > 0 && (
+                  <Row label="Total Owed" value={`$${reg.totalOwed?.toFixed(2)} USD`} />
+                )}
+                {reg.paymentStatus === 'partial' && (
+                  <>
+                    <Row label="Remaining" value={`$${(reg.totalOwed - reg.totalPaid).toFixed(2)} USD`} />
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mt-2">
+                      <span className="text-xs text-amber-400 font-semibold">Partial Payment — balance due</span>
+                    </div>
+                  </>
+                )}
                 <Row label="Signature" value={reg.signature} />
               </Section>
 
