@@ -11,32 +11,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ── Build frontend ──────────────────────────────────────
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # Build the frontend
       - name: Install client dependencies
         run: cd client && npm ci
 
       - name: Build client
         run: cd client && npm run build
 
-      # Copy built frontend into server/public
-      - name: Copy client build to server
+      # ── Build Java backend ──────────────────────────────────
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+          cache: maven
+
+      - name: Copy client build into Spring Boot static resources
         run: |
-          mkdir -p server/public
-          cp -r client/dist/* server/public/
+          mkdir -p server-java/src/main/resources/public
+          cp -r client/dist/* server-java/src/main/resources/public/
 
-      # Install server production dependencies
-      - name: Install server dependencies
-        run: cd server && npm ci --omit=dev
+      - name: Build Java backend
+        run: cd server-java && mvn clean package -DskipTests -q
 
-      # Package for Elastic Beanstalk (only server/ contents)
+      # ── Package for Elastic Beanstalk ───────────────────────
       - name: Create deployment package
         run: |
-          cd server
-          zip -r ../deploy.zip . -x "*.env*"
+          mkdir -p deploy
+          cp server-java/target/vencedores-ski-0.1.0.jar deploy/
+          cp server-java/Procfile deploy/
+          cd deploy
+          zip -r ../deploy.zip .
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
