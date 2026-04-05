@@ -6,7 +6,8 @@ export default function SuccessScreen() {
   const { formData, selectedEvent, confirmationId } = useAppStore()
   const { t } = useTranslation()
 
-  const total = selectedEvent ? selectedEvent.price + selectedEvent.processing : 0
+  const processing = selectedEvent ? Math.round((selectedEvent.price * 0.029 + 0.30) * 100) / 100 : 0
+  const total = selectedEvent ? selectedEvent.price + processing : 0
   const eventName = selectedEvent
     ? selectedEvent.name
     : ''

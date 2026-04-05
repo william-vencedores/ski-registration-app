@@ -28,7 +28,8 @@ function PaymentForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const total = selectedEvent ? selectedEvent.price + selectedEvent.processing : 0
+  const processing = selectedEvent ? Math.round((selectedEvent.price * 0.029 + 0.30) * 100) / 100 : 0
+  const total = selectedEvent ? selectedEvent.price + processing : 0
 
   const handleSubmit = async () => {
     if (!stripe || !elements || !selectedEvent) return
@@ -99,7 +100,7 @@ function PaymentForm() {
             <div className="font-semibold text-sm text-white">
               {selectedEvent.name}
             </div>
-            <div className="text-xs text-glacier">{selectedEvent.meta}</div>
+            <div className="text-xs text-glacier">{[selectedEvent.date, selectedEvent.location].filter(Boolean).join(' · ')}</div>
           </div>
         </div>
         <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
@@ -109,7 +110,7 @@ function PaymentForm() {
           </div>
           <div className="flex justify-between text-sm text-slate-600">
             <span>{t.feeProcessing}</span>
-            <span>${selectedEvent.processing.toFixed(2)}</span>
+            <span>${processing.toFixed(2)}</span>
           </div>
           <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
             <span className="text-xs tracking-widest uppercase">{t.feeTotal}</span>

@@ -11,7 +11,7 @@ import type { SkiEvent } from '../lib/events'
 import logo from '../assets/logo.jpeg'
 
 const emptyEvent: Partial<SkiEvent> = {
-  id: '', name: '', meta: '', price: 0, processing: 0,
+  id: '', name: '', date: '', location: '', price: 0,
   badge: false, badgeText: '', active: true,
 }
 
@@ -149,9 +149,11 @@ export default function AdminEvents() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{ev.meta}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {[ev.date, ev.location].filter(Boolean).join(' · ')}
+                  </div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    ID: {ev.id} · ${ev.price} + ${ev.processing} processing
+                    ID: {ev.id} · ${ev.price}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -206,29 +208,32 @@ export default function AdminEvents() {
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
                              text-white text-sm focus:outline-none focus:border-glacier" />
               </div>
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Details</label>
-                <input value={editing.meta || ''} onChange={(e) => set('meta', e.target.value)}
-                  placeholder="February 2027 · Location TBC"
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
-                             text-white text-sm focus:outline-none focus:border-glacier" />
-              </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Price ($)</label>
-                  <input type="number" step="0.01" value={editing.price || 0}
-                    onChange={(e) => set('price', parseFloat(e.target.value) || 0)}
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Date</label>
+                  <input value={editing.date || ''} onChange={(e) => set('date', e.target.value)}
+                    placeholder="February 2027"
                     className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
                                text-white text-sm focus:outline-none focus:border-glacier" />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Processing ($)</label>
-                  <input type="number" step="0.01" value={editing.processing || 0}
-                    onChange={(e) => set('processing', parseFloat(e.target.value) || 0)}
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Location</label>
+                  <input value={editing.location || ''} onChange={(e) => set('location', e.target.value)}
+                    placeholder="Aspen, Colorado"
                     className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
                                text-white text-sm focus:outline-none focus:border-glacier" />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Price ($)</label>
+                <input type="number" step="0.01" value={editing.price || 0}
+                  onChange={(e) => set('price', parseFloat(e.target.value) || 0)}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                             text-white text-sm focus:outline-none focus:border-glacier" />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Processing fee (2.9% + $0.30) is auto-calculated at checkout
+                </p>
               </div>
 
               <div>

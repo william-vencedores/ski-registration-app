@@ -24,7 +24,8 @@ public class PaymentService {
         }
 
         double price = ((Number) event.get("price")).doubleValue();
-        double processing = ((Number) event.get("processing")).doubleValue();
+        // Stripe fee: 2.9% + $0.30
+        double processing = Math.round((price * 0.029 + 0.30) * 100.0) / 100.0;
         long amount = Math.round((price + processing) * 100);
 
         var params = PaymentIntentCreateParams.builder()

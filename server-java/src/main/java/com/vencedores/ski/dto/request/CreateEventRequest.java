@@ -6,9 +6,9 @@ import lombok.Data;
 public class CreateEventRequest {
     private String id;
     private String name;
-    private String meta;
+    private String date;
+    private String location;
     private double price;
-    private double processing;
     private boolean badge;
     private String badgeText;
     private boolean active;

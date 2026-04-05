@@ -4,9 +4,9 @@ import axios from 'axios'
 export interface SkiEvent {
   id: string
   name: string
-  meta: string
+  date: string
+  location: string
   price: number
-  processing: number
   badge?: boolean
   badgeText?: string
   active?: boolean

@@ -28,11 +28,9 @@ export default function EventSelector() {
     }, 100)
   }
 
-  const name = selectedEvent
-    ? selectedEvent.name
-    : t.evChoose
-  const meta = selectedEvent
-    ? selectedEvent.meta
+  const name = selectedEvent ? selectedEvent.name : t.evChoose
+  const detail = selectedEvent
+    ? [selectedEvent.date, selectedEvent.location].filter(Boolean).join(' · ')
     : t.evChooseMeta
 
   return (
@@ -59,7 +57,7 @@ export default function EventSelector() {
             <div className="font-semibold text-[15px] truncate">
               {loading ? 'Loading...' : name}
             </div>
-            <div className="text-xs text-glacier mt-0.5 truncate">{loading ? '' : meta}</div>
+            <div className="text-xs text-glacier mt-0.5 truncate">{loading ? '' : detail}</div>
           </div>
           {selectedEvent && (
             <span className="font-cinzel text-base font-semibold text-gold-light flex-shrink-0">
@@ -98,7 +96,7 @@ export default function EventSelector() {
                     )}
                   </div>
                   <div className="text-xs text-glacier mt-0.5">
-                    {ev.meta}
+                    {[ev.date, ev.location].filter(Boolean).join(' · ')}
                   </div>
                 </div>
                 <span className="font-cinzel text-sm text-gold-light flex-shrink-0">
