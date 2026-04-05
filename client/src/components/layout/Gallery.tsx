@@ -1,11 +1,18 @@
 import { useTranslation } from '../../hooks/useTranslation'
+import imgGroupSki from '../../assets/horizontal-group-ski.png'
+import imgClase from '../../assets/clase-de-ski.jpg'
+import imgFogata from '../../assets/fogata.jpg'
+import imgGrupal from '../../assets/foto-grupal.jpg'
+import imgSaludo from '../../assets/saludo.jpg'
+import imgMontana from '../../assets/en-la-montana.jpg'
 
 const photos = [
-  { src: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=700&q=80', alt: 'Skiing', span: true },
-  { src: 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=400&q=80', alt: 'Group' },
-  { src: 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?w=400&q=80', alt: 'Mountain' },
-  { src: 'https://images.unsplash.com/photo-1547975521-6f8e5c70e7d3?w=400&q=80', alt: 'Resort' },
-  { src: 'https://images.unsplash.com/photo-1578762560042-46ad127c95ea?w=400&q=80', alt: 'Snow' },
+  { src: imgGroupSki, alt: 'Group skiing', span: true },
+  { src: imgClase, alt: 'Ski class' },
+  { src: imgMontana, alt: 'On the mountain' },
+  { src: imgFogata, alt: 'Bonfire' },
+  { src: imgGrupal, alt: 'Group photo' },
+  { src: imgSaludo, alt: 'Greeting' },
 ]
 
 export default function Gallery() {
@@ -18,14 +25,14 @@ export default function Gallery() {
                    shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)]"
         style={{
           gridTemplateColumns: '2fr 1fr 1fr',
-          gridTemplateRows: '185px 185px',
+          gridTemplateRows: '150px 150px 150px',
         }}
       >
         {photos.map((photo, i) => (
           <div
             key={i}
             className="relative overflow-hidden bg-alpine cursor-pointer group"
-            style={i === 0 ? { gridRow: 'span 2' } : {}}
+            style={i === 0 ? { gridRow: 'span 3' } : {}}
           >
             <img
               src={photo.src}

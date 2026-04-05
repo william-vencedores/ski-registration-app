@@ -66,6 +66,10 @@ export default function AdminDashboard() {
           <span className="text-xs text-slate-400 hidden sm:block">
             👤 {user?.username}
           </span>
+          <button onClick={() => navigate('/admin/events')}
+            className="text-xs text-slate-400 hover:text-white transition-colors">
+            Eventos
+          </button>
           <a href="/" className="text-xs text-slate-400 hover:text-white transition-colors">
             ← Sitio Principal
           </a>
