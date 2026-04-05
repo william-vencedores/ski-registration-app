@@ -4,7 +4,7 @@ import { useAppStore } from '../../lib/store'
 import { useEvents, type SkiEvent } from '../../lib/events'
 
 export default function EventSelector() {
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
   const { selectedEvent, setSelectedEvent, setCurrentStep } = useAppStore()
   const { events, loading } = useEvents()
   const [open, setOpen] = useState(false)
@@ -29,10 +29,10 @@ export default function EventSelector() {
   }
 
   const name = selectedEvent
-    ? (lang === 'es' ? selectedEvent.nameEs : selectedEvent.nameEn)
+    ? selectedEvent.name
     : t.evChoose
   const meta = selectedEvent
-    ? (lang === 'es' ? selectedEvent.metaEs : selectedEvent.metaEn)
+    ? selectedEvent.meta
     : t.evChooseMeta
 
   return (
@@ -54,12 +54,10 @@ export default function EventSelector() {
               : 'border-glacier/40 hover:border-glacier hover:shadow-[0_8px_30px_rgba(122,184,217,0.2)]'
             }`}
         >
-          <span className="text-2xl flex-shrink-0">
-            {selectedEvent ? selectedEvent.icon : '🎿'}
-          </span>
+          <span className="text-2xl flex-shrink-0">🎿</span>
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-[15px] truncate">
-              {loading ? 'Cargando eventos...' : name}
+              {loading ? 'Loading...' : name}
             </div>
             <div className="text-xs text-glacier mt-0.5 truncate">{loading ? '' : meta}</div>
           </div>
@@ -88,19 +86,19 @@ export default function EventSelector() {
                   border-b border-white/6 last:border-0 transition-colors duration-150
                   ${selectedEvent?.id === ev.id ? 'bg-glacier/15' : 'hover:bg-glacier/12'}`}
               >
-                <span className="text-xl flex-shrink-0">{ev.icon}</span>
+                <span className="text-xl flex-shrink-0">🎿</span>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-white flex items-center gap-2">
-                    {lang === 'es' ? ev.nameEs : ev.nameEn}
+                    {ev.name}
                     {ev.badge && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full
                         bg-pine/50 text-[#7ddc9a] border border-[rgba(125,220,154,0.3)]">
-                        {lang === 'es' ? ev.badgeEs : ev.badgeEn}
+                        {ev.badgeText}
                       </span>
                     )}
                   </div>
                   <div className="text-xs text-glacier mt-0.5">
-                    {lang === 'es' ? ev.metaEs : ev.metaEn}
+                    {ev.meta}
                   </div>
                 </div>
                 <span className="font-cinzel text-sm text-gold-light flex-shrink-0">

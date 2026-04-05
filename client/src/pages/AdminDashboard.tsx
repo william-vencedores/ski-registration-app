@@ -68,17 +68,17 @@ export default function AdminDashboard() {
           </span>
           <button onClick={() => navigate('/admin/events')}
             className="text-xs text-slate-400 hover:text-white transition-colors">
-            Eventos
+            Events
           </button>
           <a href="/" className="text-xs text-slate-400 hover:text-white transition-colors">
-            ← Sitio Principal
+            ← Main Site
           </a>
           <button
             onClick={handleLogout}
             className="text-xs px-3 py-1.5 rounded-lg border border-white/10
                        text-slate-400 hover:text-white hover:border-white/20 transition-all"
           >
-            Salir
+            Logout
           </button>
         </div>
       </header>
@@ -87,10 +87,10 @@ export default function AdminDashboard() {
         {/* Page title */}
         <div className="mb-6">
           <h1 className="font-cinzel text-2xl font-bold tracking-widest text-white">
-            Panel de Administración
+            Admin Dashboard
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Gestión de registros y pagos · Vencedores Ski Group
+            Registration & payment management · Vencedores Ski Group
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
                   : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'
                 }`}
             >
-              Todos los Eventos
+              All Events
             </button>
             {events.map((ev) => (
               <button
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
                     : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'
                   }`}
               >
-                {ev.icon} {ev.nameEs.replace('Vencedores en la Nieve ', '')}
+                {ev.name.replace('Vencedores en la Nieve ', '')}
               </button>
             ))}
           </div>
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, email, #ID..."
+              placeholder="Search by name, email, #ID..."
               className="w-full sm:w-72 pl-9 pr-4 py-2 rounded-xl border border-white/10
                          bg-white/5 text-white text-sm placeholder-slate-500
                          focus:outline-none focus:border-glacier focus:ring-1 focus:ring-glacier/20"
@@ -147,14 +147,14 @@ export default function AdminDashboard() {
           {/* Table header */}
           <div className="bg-white/[0.03] border-b border-white/8 px-5 py-3 flex items-center justify-between">
             <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">
-              {loading ? 'Cargando...' : `${filtered.length} registro${filtered.length !== 1 ? 's' : ''}`}
+              {loading ? 'Loading...' : `${filtered.length} registration${filtered.length !== 1 ? 's' : ''}`}
             </span>
             <button
               onClick={refetch}
               className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
               title="Actualizar"
             >
-              ↺ Actualizar
+              ↺ Refresh
             </button>
           </div>
 
@@ -164,15 +164,15 @@ export default function AdminDashboard() {
             <div className="px-6 py-16 text-center">
               <div className="w-8 h-8 border-2 border-white/10 border-t-glacier rounded-full
                               animate-spin mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">Cargando registros...</p>
+              <p className="text-slate-500 text-sm">Loading registrations...</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <p className="text-4xl mb-3">🏔️</p>
               <p className="text-slate-400 text-sm">
                 {data.length === 0
-                  ? 'Aún no hay registros'
-                  : 'No hay resultados para tu búsqueda'
+                  ? 'No registrations yet'
+                  : 'No results for your search'
                 }
               </p>
             </div>
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/6">
-                    {['#ID', 'Nombre', 'Evento', 'Nivel', 'Pagado', 'Estado', 'Fecha', ''].map((h) => (
+                    {['#ID', 'Name', 'Event', 'Level', 'Paid', 'Status', 'Date', ''].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-[10px] tracking-widest
                                               uppercase text-slate-500 font-semibold whitespace-nowrap">
                         {h}
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
                           }`}>
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
                             ${reg.attended ? 'bg-[#7ddc9a]' : 'bg-glacier'}`} />
-                          {reg.attended ? 'Asistió' : 'Registrado'}
+                          {reg.attended ? 'Attended' : 'Registered'}
                         </span>
                       </td>
 

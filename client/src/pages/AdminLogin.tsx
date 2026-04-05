@@ -19,7 +19,7 @@ export default function AdminLogin() {
       await login(username, password)
       navigate('/admin', { replace: true })
     } catch {
-      setError('Credenciales inválidas / Invalid credentials')
+      setError('Invalid credentials')
     } finally {
       setLoading(false)
     }
@@ -47,7 +47,7 @@ export default function AdminLogin() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-[11px] font-semibold tracking-widest uppercase text-slate-400 mb-1.5">
-                Usuario / Username
+                Username
               </label>
               <input
                 type="text"
@@ -64,7 +64,7 @@ export default function AdminLogin() {
             </div>
             <div>
               <label className="block text-[11px] font-semibold tracking-widest uppercase text-slate-400 mb-1.5">
-                Contraseña / Password
+                Password
               </label>
               <input
                 type="password"
@@ -101,17 +101,17 @@ export default function AdminLogin() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Entrando...
+                  Signing in...
                 </span>
               ) : (
-                '🔐 Iniciar Sesión'
+                '🔐 Sign In'
               )}
             </button>
           </form>
         </div>
 
         <p className="text-center text-xs text-white/20 mt-5">
-          Acceso restringido · Authorized personnel only
+          Authorized personnel only
         </p>
       </div>
     </div>

@@ -5,28 +5,28 @@ export default function StatsCards() {
 
   const cards = [
     {
-      label: 'Total Registrados',
+      label: 'Total Registered',
       value: loading ? '—' : data?.totalRegistrations ?? 0,
       icon: '👥',
       color: 'from-deep-sky/20 to-glacier/10',
       border: 'border-glacier/20',
     },
     {
-      label: 'Ingresos Totales',
+      label: 'Total Revenue',
       value: loading ? '—' : `$${(data?.totalRevenue ?? 0).toFixed(2)}`,
       icon: '💰',
       color: 'from-pine/20 to-pine-light/10',
       border: 'border-pine/30',
     },
     {
-      label: 'Eventos Activos',
+      label: 'Active Events',
       value: loading ? '—' : data?.events.length ?? 0,
       icon: '🏔️',
       color: 'from-gold/20 to-gold-light/10',
       border: 'border-gold/30',
     },
     {
-      label: 'Asistencia Marcada',
+      label: 'Attendance Marked',
       value: loading ? '—' : data?.events.reduce((s, e) => s + e.attended, 0) ?? 0,
       icon: '✅',
       color: 'from-purple-500/20 to-purple-400/10',

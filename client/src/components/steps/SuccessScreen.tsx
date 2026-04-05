@@ -4,11 +4,11 @@ import { useTranslation } from '../../hooks/useTranslation'
 
 export default function SuccessScreen() {
   const { formData, selectedEvent, confirmationId } = useAppStore()
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
 
   const total = selectedEvent ? selectedEvent.price + selectedEvent.processing : 0
   const eventName = selectedEvent
-    ? (lang === 'es' ? selectedEvent.nameEs : selectedEvent.nameEn)
+    ? selectedEvent.name
     : ''
 
   return (

@@ -4,8 +4,8 @@ import type { Registration } from '../../lib/adminApi'
 import { toggleAttendance, resendEmail } from '../../lib/adminApi'
 
 const SKILL_LABELS: Record<string, string> = {
-  beginner: '🎿 Principiante', intermediate: '⛷️ Intermedio',
-  advanced: '🏔️ Avanzado', expert: '🌪️ Experto',
+  beginner: '🎿 Beginner', intermediate: '⛷️ Intermediate',
+  advanced: '🏔️ Advanced', expert: '🌪️ Expert',
   freeride: '❄️ Freeride', snowboard: '🏂 Snowboard',
 }
 
@@ -107,7 +107,7 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                     ? 'bg-pine/20 text-[#7ddc9a] border border-pine/40'
                     : 'bg-deep-sky/15 text-glacier border border-glacier/30'}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${reg.attended ? 'bg-[#7ddc9a]' : 'bg-glacier'}`} />
-                  {reg.attended ? 'Asistió' : 'Registrado'}
+                  {reg.attended ? 'Attended' : 'Registered'}
                 </div>
                 <div className="text-xs text-slate-500">
                   {new Date(reg.createdAt).toLocaleDateString('es-US', {
@@ -116,35 +116,35 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 </div>
               </div>
 
-              <Section title="Evento & Pago">
-                <Row label="Evento" value={reg.eventName} />
-                <Row label="Total Pagado" value={`$${reg.totalPaid?.toFixed(2)} USD`} />
-                <Row label="Firma" value={reg.signature} />
+              <Section title="Event & Payment">
+                <Row label="Event" value={reg.eventName} />
+                <Row label="Total Paid" value={`$${reg.totalPaid?.toFixed(2)} USD`} />
+                <Row label="Signature" value={reg.signature} />
               </Section>
 
-              <Section title="Información Personal">
-                <Row label="Nombre" value={`${reg.firstName} ${reg.lastName}`} />
+              <Section title="Personal Info">
+                <Row label="Name" value={`${reg.firstName} ${reg.lastName}`} />
                 <Row label="Email" value={reg.email} />
-                <Row label="Teléfono" value={reg.phone} />
-                <Row label="Fecha Nac." value={reg.dob} />
-                <Row label="Ciudad" value={`${reg.city}, ${reg.state}`} />
+                <Row label="Phone" value={reg.phone} />
+                <Row label="DOB" value={reg.dob} />
+                <Row label="City" value={`${reg.city}, ${reg.state}`} />
               </Section>
 
-              <Section title="Emergencia">
-                <Row label="Contacto" value={reg.emergencyName} />
-                <Row label="Teléfono" value={reg.emergencyPhone} />
-                <Row label="Relación" value={reg.emergencyRelation} />
+              <Section title="Emergency Contact">
+                <Row label="Contact" value={reg.emergencyName} />
+                <Row label="Phone" value={reg.emergencyPhone} />
+                <Row label="Relationship" value={reg.emergencyRelation} />
               </Section>
 
-              <Section title="Ski & Dieta">
-                <Row label="Nivel" value={SKILL_LABELS[reg.skillLevel] ?? reg.skillLevel} />
-                {reg.dietary && <Row label="Dieta" value={reg.dietary} />}
+              <Section title="Ski & Diet">
+                <Row label="Level" value={SKILL_LABELS[reg.skillLevel] ?? reg.skillLevel} />
+                {reg.dietary && <Row label="Dietary" value={reg.dietary} />}
               </Section>
 
-              <Section title="Info Médica">
-                <Row label="Condición" value={reg.medConditions === 'yes' ? '⚠️ Sí' : 'No'} />
-                <Row label="Alergias" value={reg.medAllergies === 'yes' ? '⚠️ Sí' : 'No'} />
-                <Row label="Medicamentos" value={reg.medMedications === 'yes' ? '⚠️ Sí' : 'No'} />
+              <Section title="Medical Info">
+                <Row label="Conditions" value={reg.medConditions === 'yes' ? '⚠️ Yes' : 'No'} />
+                <Row label="Allergies" value={reg.medAllergies === 'yes' ? '⚠️ Yes' : 'No'} />
+                <Row label="Medications" value={reg.medMedications === 'yes' ? '⚠️ Yes' : 'No'} />
               </Section>
 
               {/* Actions */}
@@ -161,7 +161,7 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 >
                   {loadingAttend
                     ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                    : reg.attended ? '✗ Quitar Asistencia' : '✓ Marcar Asistencia'
+                    : reg.attended ? '✗ Remove Attendance' : '✓ Mark Attended'
                   }
                 </button>
 
@@ -175,9 +175,9 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 >
                   {loadingEmail
                     ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                    : emailStatus === 'sent' ? '✓ Email Enviado!'
-                    : emailStatus === 'error' ? '⚠️ Error al enviar'
-                    : '📧 Reenviar Confirmación'
+                    : emailStatus === 'sent' ? '✓ Email Sent!'
+                    : emailStatus === 'error' ? '⚠️ Failed to send'
+                    : '📧 Resend Confirmation'
                   }
                 </button>
               </div>

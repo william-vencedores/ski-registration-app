@@ -47,7 +47,7 @@ public class RegistrationService {
         item.put("id", s(confirmationId));
         item.put("createdAt", s(now));
         item.put("eventId", s(req.getEventId()));
-        item.put("eventName", s((String) event.get("nameEs")));
+        item.put("eventName", s((String) event.get("name")));
         // Personal
         item.put("firstName", s(req.getFirstName()));
         item.put("lastName", s(req.getLastName()));
@@ -98,7 +98,7 @@ public class RegistrationService {
         emailService.sendConfirmationEmailAsync(
                 req.getEmail(),
                 req.getFirstName() + " " + req.getLastName(),
-                (String) event.get("nameEs"),
+                (String) event.get("name"),
                 confirmationId,
                 req.getTotalPaid()
         );

@@ -36,16 +36,12 @@ public class EventService {
         item.put("GSI1PK", s("ENTITY#EVENT"));
         item.put("GSI1SK", s("EVENT#" + req.getId()));
         item.put("id", s(req.getId()));
-        item.put("icon", s(req.getIcon() != null ? req.getIcon() : ""));
-        item.put("nameEs", s(req.getNameEs()));
-        item.put("nameEn", s(req.getNameEn()));
-        item.put("metaEs", s(req.getMetaEs() != null ? req.getMetaEs() : ""));
-        item.put("metaEn", s(req.getMetaEn() != null ? req.getMetaEn() : ""));
+        item.put("name", s(req.getName()));
+        item.put("meta", s(req.getMeta() != null ? req.getMeta() : ""));
         item.put("price", n(req.getPrice()));
         item.put("processing", n(req.getProcessing()));
         item.put("badge", bool(req.isBadge()));
-        item.put("badgeEs", s(req.getBadgeEs() != null ? req.getBadgeEs() : ""));
-        item.put("badgeEn", s(req.getBadgeEn() != null ? req.getBadgeEn() : ""));
+        item.put("badgeText", s(req.getBadgeText() != null ? req.getBadgeText() : ""));
         item.put("active", bool(req.isActive()));
         item.put("createdAt", s(now));
         item.put("updatedAt", s(now));
@@ -78,16 +74,12 @@ public class EventService {
 
         var now = Instant.now().toString();
         var item = new HashMap<>(existing);
-        if (req.getIcon() != null) item.put("icon", s(req.getIcon()));
-        if (req.getNameEs() != null) item.put("nameEs", s(req.getNameEs()));
-        if (req.getNameEn() != null) item.put("nameEn", s(req.getNameEn()));
-        if (req.getMetaEs() != null) item.put("metaEs", s(req.getMetaEs()));
-        if (req.getMetaEn() != null) item.put("metaEn", s(req.getMetaEn()));
+        if (req.getName() != null) item.put("name", s(req.getName()));
+        if (req.getMeta() != null) item.put("meta", s(req.getMeta()));
         item.put("price", n(req.getPrice()));
         item.put("processing", n(req.getProcessing()));
         item.put("badge", bool(req.isBadge()));
-        if (req.getBadgeEs() != null) item.put("badgeEs", s(req.getBadgeEs()));
-        if (req.getBadgeEn() != null) item.put("badgeEn", s(req.getBadgeEn()));
+        if (req.getBadgeText() != null) item.put("badgeText", s(req.getBadgeText()));
         item.put("active", bool(req.isActive()));
         item.put("updatedAt", s(now));
 
@@ -106,16 +98,12 @@ public class EventService {
     private Map<String, Object> itemToEventMap(Map<String, AttributeValue> item) {
         var map = new LinkedHashMap<String, Object>();
         map.put("id", str(item, "id"));
-        map.put("icon", str(item, "icon"));
-        map.put("nameEs", str(item, "nameEs"));
-        map.put("nameEn", str(item, "nameEn"));
-        map.put("metaEs", str(item, "metaEs"));
-        map.put("metaEn", str(item, "metaEn"));
+        map.put("name", str(item, "name"));
+        map.put("meta", str(item, "meta"));
         map.put("price", getNum(item, "price"));
         map.put("processing", getNum(item, "processing"));
         map.put("badge", getBool(item, "badge"));
-        map.put("badgeEs", str(item, "badgeEs"));
-        map.put("badgeEn", str(item, "badgeEn"));
+        map.put("badgeText", str(item, "badgeText"));
         map.put("active", getBool(item, "active"));
         map.put("createdAt", str(item, "createdAt"));
         map.put("updatedAt", str(item, "updatedAt"));

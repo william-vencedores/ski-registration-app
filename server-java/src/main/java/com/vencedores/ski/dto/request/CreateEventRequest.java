@@ -5,15 +5,11 @@ import lombok.Data;
 @Data
 public class CreateEventRequest {
     private String id;
-    private String icon;
-    private String nameEs;
-    private String nameEn;
-    private String metaEs;
-    private String metaEn;
+    private String name;
+    private String meta;
     private double price;
     private double processing;
     private boolean badge;
-    private String badgeEs;
-    private String badgeEn;
+    private String badgeText;
     private boolean active;
 }

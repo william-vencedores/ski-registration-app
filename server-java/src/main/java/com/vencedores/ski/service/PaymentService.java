@@ -34,7 +34,7 @@ public class PaymentService {
                 .putMetadata("eventId", eventId)
                 .putMetadata("name", name)
                 .putMetadata("email", email)
-                .setDescription("Vencedores Ski — " + event.get("nameEs"))
+                .setDescription("Vencedores Ski — " + event.get("name"))
                 .build();
 
         PaymentIntent paymentIntent = PaymentIntent.create(params);

@@ -95,12 +95,11 @@ function PaymentForm() {
       {/* Event Summary Banner */}
       <div className="rounded-xl overflow-hidden border border-black/8">
         <div className="bg-gradient-to-br from-slate-900 to-alpine px-5 py-3 flex items-center gap-2">
-          <span className="text-xl">{selectedEvent.icon}</span>
           <div>
             <div className="font-semibold text-sm text-white">
-              {selectedEvent.nameEs}
+              {selectedEvent.name}
             </div>
-            <div className="text-xs text-glacier">{selectedEvent.metaEs}</div>
+            <div className="text-xs text-glacier">{selectedEvent.meta}</div>
           </div>
         </div>
         <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
