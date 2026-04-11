@@ -37,6 +37,7 @@ export default function AdminDisclosures() {
   const [isNew, setIsNew] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [previewLang, setPreviewLang] = useState<'en' | 'es' | null>(null)
 
   // Event linking state
   const [linkingEventId, setLinkingEventId] = useState<string | null>(null)
@@ -44,7 +45,7 @@ export default function AdminDisclosures() {
 
   const handleLogout = () => { logout(); navigate('/admin/login', { replace: true }) }
 
-  const openNew = () => { setEditing({ ...emptyDisclosure }); setIsNew(true); setError('') }
+  const openNew = () => { setEditing({ ...emptyDisclosure }); setIsNew(true); setError(''); setPreviewLang(null) }
   const openEdit = (d: Disclosure) => {
     setEditing({
       id: d.id,
@@ -54,7 +55,7 @@ export default function AdminDisclosures() {
       contentEn: d.contentEn,
       required: d.required,
     })
-    setIsNew(false); setError('')
+    setIsNew(false); setError(''); setPreviewLang(null)
   }
   const close = () => { setEditing(null); setError('') }
 
@@ -329,26 +330,58 @@ export default function AdminDisclosures() {
 
               {/* Content EN */}
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Content (English)</label>
-                <textarea value={editing.contentEn}
-                  onChange={(e) => setEditing((prev) => prev ? { ...prev, contentEn: e.target.value } : prev)}
-                  placeholder="HTML content for the English version..."
-                  rows={6}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
-                             text-white text-sm focus:outline-none focus:border-glacier resize-none
-                             font-mono text-xs" />
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Content (English)</label>
+                  <button type="button"
+                    onClick={() => setPreviewLang(previewLang === 'en' ? null : 'en')}
+                    className={`text-[10px] px-2 py-0.5 rounded border transition-all
+                      ${previewLang === 'en'
+                        ? 'bg-glacier/20 text-glacier border-glacier/40'
+                        : 'bg-white/5 text-slate-500 border-white/10 hover:text-slate-300'}`}>
+                    {previewLang === 'en' ? 'Edit' : 'Preview'}
+                  </button>
+                </div>
+                {previewLang === 'en' ? (
+                  <div className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                                  text-slate-300 text-sm min-h-[9rem] overflow-y-auto"
+                       dangerouslySetInnerHTML={{ __html: editing.contentEn || '<span class="text-slate-500">No content</span>' }} />
+                ) : (
+                  <textarea value={editing.contentEn}
+                    onChange={(e) => setEditing((prev) => prev ? { ...prev, contentEn: e.target.value } : prev)}
+                    placeholder="HTML content for the English version..."
+                    rows={6}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                               text-white text-sm focus:outline-none focus:border-glacier resize-none
+                               font-mono text-xs" />
+                )}
               </div>
 
               {/* Content ES */}
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Content (Spanish)</label>
-                <textarea value={editing.contentEs}
-                  onChange={(e) => setEditing((prev) => prev ? { ...prev, contentEs: e.target.value } : prev)}
-                  placeholder="HTML content for the Spanish version..."
-                  rows={6}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
-                             text-white text-sm focus:outline-none focus:border-glacier resize-none
-                             font-mono text-xs" />
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Content (Spanish)</label>
+                  <button type="button"
+                    onClick={() => setPreviewLang(previewLang === 'es' ? null : 'es')}
+                    className={`text-[10px] px-2 py-0.5 rounded border transition-all
+                      ${previewLang === 'es'
+                        ? 'bg-glacier/20 text-glacier border-glacier/40'
+                        : 'bg-white/5 text-slate-500 border-white/10 hover:text-slate-300'}`}>
+                    {previewLang === 'es' ? 'Edit' : 'Preview'}
+                  </button>
+                </div>
+                {previewLang === 'es' ? (
+                  <div className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                                  text-slate-300 text-sm min-h-[9rem] overflow-y-auto"
+                       dangerouslySetInnerHTML={{ __html: editing.contentEs || '<span class="text-slate-500">No content</span>' }} />
+                ) : (
+                  <textarea value={editing.contentEs}
+                    onChange={(e) => setEditing((prev) => prev ? { ...prev, contentEs: e.target.value } : prev)}
+                    placeholder="HTML content for the Spanish version..."
+                    rows={6}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                               text-white text-sm focus:outline-none focus:border-glacier resize-none
+                               font-mono text-xs" />
+                )}
               </div>
 
               {/* Required toggle */}

@@ -114,13 +114,11 @@ public class DisclosureService {
         return items.stream()
                 .filter(item -> item.get("PK").s().startsWith("DISCLOSURE#"))
                 .<Map<String, Object>>map(item -> {
-                    var map = new LinkedHashMap<String, Object>();
-                    map.put("id", str(item, "id"));
-                    map.put("latestVersion", (int) getNum(item, "latestVersion"));
-                    map.put("titleEs", str(item, "titleEs"));
-                    map.put("titleEn", str(item, "titleEn"));
-                    map.put("required", getBool(item, "required"));
-                    map.put("createdAt", str(item, "createdAt"));
+                    String id = str(item, "id");
+                    int version = (int) getNum(item, "latestVersion");
+                    var versionItem = repo.getItem("DISCLOSURE#" + id, "VERSION#" + version);
+                    var map = itemToDisclosureMap(versionItem);
+                    map.put("latestVersion", version);
                     return map;
                 })
                 .toList();
