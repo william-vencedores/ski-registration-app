@@ -8,6 +8,8 @@ import RegistrationForm from './components/steps/RegistrationForm'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminEvents from './pages/AdminEvents'
+import AdminUsers from './pages/AdminUsers'
+import AdminDisclosures from './pages/AdminDisclosures'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import { useAppStore } from './lib/store'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/events" element={<ProtectedRoute><AdminEvents /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/disclosures" element={<ProtectedRoute><AdminDisclosures /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

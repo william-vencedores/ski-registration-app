@@ -70,9 +70,14 @@ export default function AdminDashboard() {
             className="text-xs text-slate-400 hover:text-white transition-colors">
             Events
           </button>
-          <a href="/" className="text-xs text-slate-400 hover:text-white transition-colors">
-            ← Main Site
-          </a>
+          <button onClick={() => navigate('/admin/disclosures')}
+            className="text-xs text-slate-400 hover:text-white transition-colors">
+            Disclosures
+          </button>
+          <button onClick={() => navigate('/admin/users')}
+            className="text-xs text-slate-400 hover:text-white transition-colors">
+            Users
+          </button>
           <button
             onClick={handleLogout}
             className="text-xs px-3 py-1.5 rounded-lg border border-white/10
