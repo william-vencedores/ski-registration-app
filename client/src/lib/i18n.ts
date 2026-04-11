@@ -49,19 +49,6 @@ export const translations = {
     // Step 5
     s5Title: 'DIVULGACIONES Y EXENCIONES',
     s5Sub: 'Lee y firma cada documento para continuar',
-    liabTitle: '⚖️ Exención de Responsabilidad / Liability Waiver',
-    liabText: `<h4 class="font-bold text-slate-800 mb-2 text-[13px]">EXENCIÓN DE RESPONSABILIDAD — VENCEDORES SKI GROUP</h4>
-<p class="mb-3">Yo, el abajo firmante, reconozco que el esquí y el snowboard conllevan riesgos inherentes de lesiones físicas, incluyendo fracturas, esguinces, contusiones, y en casos extremos, lesiones graves o muerte.</p>
-<p class="mb-3">Al participar voluntariamente en el evento de Vencedores Ski Group, yo y mis herederos relevamos a Vencedores Ski Group, sus organizadores, voluntarios y patrocinadores de toda responsabilidad.</p>
-<h4 class="font-bold text-slate-800 mb-2 text-[13px]">LIABILITY WAIVER — VENCEDORES SKI GROUP</h4>
-<p>By participating, I release Vencedores Ski Group, its organizers, volunteers, and sponsors from all liability for personal injury or property damage arising from my participation.</p>`,
-    liabAccept: 'He leído y acepto / I have read and accept',
-    medTitle: '🏥 Autorización Médica / Medical Authorization',
-    medText: `<h4 class="font-bold text-slate-800 mb-2 text-[13px]">AUTORIZACIÓN MÉDICA DE EMERGENCIA</h4>
-<p class="mb-3">En caso de emergencia médica, autorizo a los organizadores a proporcionar o buscar tratamiento médico en mi nombre, incluyendo transporte a un centro médico apropiado.</p>
-<h4 class="font-bold text-slate-800 mb-2 text-[13px]">EMERGENCY MEDICAL AUTHORIZATION</h4>
-<p>In case of medical emergency, I authorize organizers and first aid personnel to provide or seek medical treatment on my behalf, including transportation to an appropriate medical facility.</p>`,
-    medAccept: 'He leído y acepto / I have read and accept',
     sigLabel: 'Firma Digital / Digital Signature',
     sigPh: 'Escribe tu nombre completo como firma',
     // Step 6
@@ -166,15 +153,6 @@ export const translations = {
     medD1: 'Describe your condition:', medD2: 'Describe your allergies:', medD3: 'List your medications:',
     s5Title: 'DISCLOSURES & WAIVERS',
     s5Sub: 'Please read and sign each document to continue',
-    liabTitle: '⚖️ Liability Waiver',
-    liabText: `<h4 class="font-bold text-slate-800 mb-2 text-[13px]">LIABILITY WAIVER — VENCEDORES SKI GROUP</h4>
-<p class="mb-3">I acknowledge that skiing and snowboarding carry inherent risks of physical injury including fractures, sprains, bruises, and in extreme cases serious injury or death.</p>
-<p>By voluntarily participating, I release Vencedores Ski Group, its organizers, volunteers, and sponsors from all liability for personal injury or property damage arising from my participation.</p>`,
-    liabAccept: 'I have read and accept the Liability Waiver',
-    medTitle: '🏥 Medical Authorization',
-    medText: `<h4 class="font-bold text-slate-800 mb-2 text-[13px]">EMERGENCY MEDICAL AUTHORIZATION</h4>
-<p>In case of a medical emergency during my participation, I authorize the organizers and first aid personnel to provide or seek medical treatment on my behalf, including transportation to an appropriate medical facility.</p>`,
-    medAccept: 'I have read and accept the Medical Authorization',
     sigLabel: 'Digital Signature',
     sigPh: 'Type your full name as your signature',
     s6Title: 'REGISTRATION FEE',
