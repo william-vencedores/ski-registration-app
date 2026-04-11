@@ -31,6 +31,16 @@ public class RegistrationService {
             throw new BadRequestException("Missing required fields");
         }
 
+        // Check for duplicate registration (same email + same event)
+        String normalizedEmail = req.getEmail().toLowerCase().trim();
+        var existingRegs = repo.queryGsi("GSI2", "GSI2PK", "EMAIL#" + normalizedEmail, "GSI2SK", null);
+        for (var existing : existingRegs) {
+            String existingEventId = existing.get("eventId") != null ? existing.get("eventId").s() : "";
+            if (req.getEventId().equals(existingEventId)) {
+                throw new BadRequestException("You are already registered for this event.");
+            }
+        }
+
         // Validate event exists and decrement spots
         var event = eventService.getEvent(req.getEventId());
         eventService.decrementSpotsLeft(req.getEventId());

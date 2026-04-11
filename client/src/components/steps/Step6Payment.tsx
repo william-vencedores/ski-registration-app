@@ -97,8 +97,8 @@ function PaymentForm() {
         setPaymentInfo({ totalPaid: data.chargeAmount, totalOwed: data.totalOwed })
         setCurrentStep(7)
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'An error occurred. Please try again.'
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.response?.data?.message || err?.message || 'An error occurred. Please try again.'
       setError(msg)
       setLoading(false)
     }
