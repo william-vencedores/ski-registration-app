@@ -97,12 +97,16 @@ public class VerificationService {
         // Success — delete verification item and return profile
         repo.deleteItem(pk, sk);
 
-        var profile = getLatestProfile(normalizedEmail);
-        if (profile == null) {
-            return Map.of("verified", true, "profile", Map.of());
+        var profileResult = getLatestProfile(normalizedEmail);
+        if (profileResult == null) {
+            return Map.of("verified", true, "profile", Map.of(), "registeredEventIds", List.of());
         }
 
-        return Map.of("verified", true, "profile", profile);
+        return Map.of(
+                "verified", true,
+                "profile", profileResult.get("profile"),
+                "registeredEventIds", profileResult.get("registeredEventIds")
+        );
     }
 
     private Map<String, Object> getLatestProfile(String email) {
@@ -110,6 +114,13 @@ public class VerificationService {
         if (items.isEmpty()) {
             return null;
         }
+
+        // Collect all event IDs this email is registered for
+        var registeredEventIds = items.stream()
+                .map(item -> str(item, "eventId"))
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .toList();
 
         // Get the most recent registration (last item, sorted by GSI2SK = createdAt)
         var latest = items.getLast();
@@ -133,7 +144,7 @@ public class VerificationService {
         profile.put("allergyDetails", str(latest, "allergyDetails"));
         profile.put("medMedications", str(latest, "medMedications"));
         profile.put("medicationDetails", str(latest, "medicationDetails"));
-        return profile;
+        return Map.of("profile", profile, "registeredEventIds", registeredEventIds);
     }
 
     private String str(Map<String, AttributeValue> item, String key) {

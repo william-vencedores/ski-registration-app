@@ -6,7 +6,7 @@ import { sendVerificationCode, verifyCode } from '../../lib/returningApi'
 type Phase = 'choice' | 'email' | 'code'
 
 export default function ReturningUserPrompt() {
-  const { setFormData, setIsReturningUser, setCurrentStep } = useAppStore()
+  const { setFormData, setIsReturningUser, setCurrentStep, selectedEvent } = useAppStore()
   const { t } = useTranslation()
 
   const [phase, setPhase] = useState<Phase>('choice')
@@ -14,6 +14,8 @@ export default function ReturningUserPrompt() {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
+  const [returnedName, setReturnedName] = useState('')
 
   const handleNew = () => {
     setIsReturningUser(false)
@@ -41,6 +43,12 @@ export default function ReturningUserPrompt() {
     try {
       const result = await verifyCode(email.trim(), code.trim())
       if (result.verified && result.profile) {
+        // Check if already registered for this event
+        if (selectedEvent && result.registeredEventIds?.includes(selectedEvent.id)) {
+          setReturnedName(result.profile.firstName || '')
+          setAlreadyRegistered(true)
+          return
+        }
         setFormData(result.profile)
         setIsReturningUser(true)
         setCurrentStep(1)
@@ -55,6 +63,39 @@ export default function ReturningUserPrompt() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (alreadyRegistered) {
+    return (
+      <div className="flex flex-col gap-5 text-center">
+        <div className="mb-2">
+          <div className="text-5xl mb-4">✓</div>
+          <h2 className="card-title">{t.returningAlreadyRegisteredTitle}</h2>
+          <p className="card-subtitle mt-2">
+            {returnedName ? `${returnedName}, ` : ''}{t.returningAlreadyRegisteredMsg}
+          </p>
+        </div>
+        <div className="bg-glacier/10 border border-glacier/20 rounded-xl px-4 py-3">
+          <p className="text-sm text-glacier font-semibold">{selectedEvent?.name}</p>
+          {selectedEvent?.date && (
+            <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setAlreadyRegistered(false)
+            setPhase('choice')
+            setCode('')
+            setEmail('')
+            setError('')
+          }}
+          className="btn-ghost mx-auto"
+        >
+          {t.back}
+        </button>
+      </div>
+    )
   }
 
   if (phase === 'choice') {

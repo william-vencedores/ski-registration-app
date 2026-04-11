@@ -111,6 +111,8 @@ export const translations = {
     returningVerifying: 'Verificando...',
     returningSkillNote: 'Tu nivel anterior era:',
     returningSkillUpdate: 'Puedes actualizarlo o dejarlo igual',
+    returningAlreadyRegisteredTitle: 'YA ESTAS REGISTRADO',
+    returningAlreadyRegisteredMsg: 'ya estas registrado/a para este evento.',
   },
   en: {
     headerSub: 'Ski Group · Registration 2027',
@@ -209,6 +211,8 @@ export const translations = {
     returningVerifying: 'Verifying...',
     returningSkillNote: 'Your previous level was:',
     returningSkillUpdate: 'You can update it or keep it the same',
+    returningAlreadyRegisteredTitle: 'ALREADY REGISTERED',
+    returningAlreadyRegisteredMsg: 'you are already registered for this event.',
   },
 } as const
 

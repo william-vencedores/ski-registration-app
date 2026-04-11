@@ -7,7 +7,7 @@ export async function sendVerificationCode(email: string): Promise<void> {
   await axios.post('/api/returning/send-code', { email })
 }
 
-export async function verifyCode(email: string, code: string): Promise<{ verified: boolean; profile?: ProfileData; error?: string }> {
+export async function verifyCode(email: string, code: string): Promise<{ verified: boolean; profile?: ProfileData; registeredEventIds?: string[]; error?: string }> {
   try {
     const res = await axios.post('/api/returning/verify-code', { email, code })
     return res.data
