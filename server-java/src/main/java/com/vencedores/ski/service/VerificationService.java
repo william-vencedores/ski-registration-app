@@ -105,7 +105,8 @@ public class VerificationService {
         return Map.of(
                 "verified", true,
                 "profile", profileResult.get("profile"),
-                "registeredEventIds", profileResult.get("registeredEventIds")
+                "registeredEventIds", profileResult.get("registeredEventIds"),
+                "registrations", profileResult.get("registrations")
         );
     }
 
@@ -120,6 +121,20 @@ public class VerificationService {
                 .map(item -> str(item, "eventId"))
                 .filter(id -> !id.isEmpty())
                 .distinct()
+                .toList();
+
+        // Build registration info per event (for balance checks)
+        var registrations = items.stream()
+                .filter(item -> !str(item, "eventId").isEmpty())
+                .map(item -> {
+                    var reg = new LinkedHashMap<String, Object>();
+                    reg.put("eventId", str(item, "eventId"));
+                    reg.put("confirmationId", str(item, "id"));
+                    reg.put("totalPaid", getNumDouble(item, "totalPaid"));
+                    reg.put("totalOwed", getNumDouble(item, "totalOwed"));
+                    reg.put("paymentStatus", str(item, "paymentStatus"));
+                    return reg;
+                })
                 .toList();
 
         // Get the most recent registration (last item, sorted by GSI2SK = createdAt)
@@ -144,7 +159,7 @@ public class VerificationService {
         profile.put("allergyDetails", str(latest, "allergyDetails"));
         profile.put("medMedications", str(latest, "medMedications"));
         profile.put("medicationDetails", str(latest, "medicationDetails"));
-        return Map.of("profile", profile, "registeredEventIds", registeredEventIds);
+        return Map.of("profile", profile, "registeredEventIds", registeredEventIds, "registrations", registrations);
     }
 
     private String str(Map<String, AttributeValue> item, String key) {
@@ -155,6 +170,11 @@ public class VerificationService {
     private int getNum(Map<String, AttributeValue> item, String key) {
         var v = item.get(key);
         return v != null && v.n() != null ? (int) Double.parseDouble(v.n()) : 0;
+    }
+
+    private double getNumDouble(Map<String, AttributeValue> item, String key) {
+        var v = item.get(key);
+        return v != null && v.n() != null ? Double.parseDouble(v.n()) : 0;
     }
 
     private AttributeValue s(String val) {

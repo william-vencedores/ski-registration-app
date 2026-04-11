@@ -31,4 +31,15 @@ public class PaymentController {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/create-balance-intent")
+    public ResponseEntity<?> createBalanceIntent(@RequestBody Map<String, String> req) {
+        try {
+            var result = paymentService.createBalancePaymentIntent(
+                    req.get("registrationId"), req.get("email"), req.get("name"));
+            return ResponseEntity.ok(result);
+        } catch (StripeException e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

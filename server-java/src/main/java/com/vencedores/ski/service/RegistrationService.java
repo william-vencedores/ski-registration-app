@@ -186,6 +186,37 @@ public class RegistrationService {
         return Map.of("success", true, "sentTo", reg.get("email"));
     }
 
+    public Map<String, Object> payBalance(String regId, double amountPaid) {
+        // Find the registration via GSI
+        var items = repo.queryGsi("GSI1", "GSI1PK", "REG#" + regId, "GSI1SK", null);
+        if (items.isEmpty()) {
+            throw new ResourceNotFoundException("Registration not found: " + regId);
+        }
+
+        var item = items.getFirst();
+        String pk = item.get("PK").s();
+        String sk = item.get("SK").s();
+        double currentPaid = item.get("totalPaid") != null ? Double.parseDouble(item.get("totalPaid").n()) : 0;
+        double totalOwed = item.get("totalOwed") != null ? Double.parseDouble(item.get("totalOwed").n()) : 0;
+
+        double newTotalPaid = currentPaid + amountPaid;
+        String newStatus = newTotalPaid >= totalOwed ? "paid" : "partial";
+
+        repo.updateItem(pk, sk,
+                "SET totalPaid = :paid, paymentStatus = :status",
+                Map.of(
+                        ":paid", n(newTotalPaid),
+                        ":status", s(newStatus)
+                ), null);
+
+        return Map.of(
+                "success", true,
+                "totalPaid", newTotalPaid,
+                "totalOwed", totalOwed,
+                "paymentStatus", newStatus
+        );
+    }
+
     public Map<String, Object> getStats() {
         var allRegs = repo.scanWithFilter("begins_with(SK, :sk)",
                 Map.of(":sk", s("REG#")));
