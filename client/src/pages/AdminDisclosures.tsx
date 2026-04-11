@@ -259,8 +259,10 @@ export default function AdminDisclosures() {
                       ID: {d.id}
                     </div>
                     {/* Content preview */}
-                    <div className="text-xs text-slate-500 mt-2 line-clamp-2"
-                         dangerouslySetInnerHTML={{ __html: (d.contentEn || d.contentEs).slice(0, 200) + '...' }} />
+                    {(d.contentEn || d.contentEs) && (
+                      <div className="text-xs text-slate-500 mt-2 line-clamp-2"
+                           dangerouslySetInnerHTML={{ __html: (d.contentEn || d.contentEs).slice(0, 200) + '...' }} />
+                    )}
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <button onClick={() => openEdit(d)}
