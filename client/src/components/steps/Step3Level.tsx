@@ -6,13 +6,22 @@ interface Props {
 }
 
 export default function Step3Level({ errors }: Props) {
-  const { formData, setFormData } = useAppStore()
+  const { formData, setFormData, isReturningUser } = useAppStore()
   const { t } = useTranslation()
+
+  const previousSkillName = isReturningUser && formData.skillLevel
+    ? t.skills.find(s => s.value === formData.skillLevel)?.name
+    : null
 
   return (
     <div className="flex flex-col gap-5">
       <div>
         <label className="form-label">{t.skillLabel}</label>
+        {previousSkillName && (
+          <p className="text-glacier text-xs mb-2">
+            {t.returningSkillNote} <strong>{previousSkillName}</strong>. {t.returningSkillUpdate}
+          </p>
+        )}
         {errors.skillLevel && <p className="text-red-500 text-xs mb-2">{errors.skillLevel}</p>}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           {t.skills.map((skill) => (

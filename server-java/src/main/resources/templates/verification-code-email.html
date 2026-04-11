@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8" /><title>Verification Code</title></head>
+<body style="margin:0;padding:0;background:#0a1628;font-family:'DM Sans',Arial,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
+    <div style="background:linear-gradient(135deg,#1e5b8a,#0d2340);border-radius:16px;padding:32px;text-align:center;margin-bottom:20px;">
+      <h1 style="color:#e8b84b;font-family:Georgia,serif;font-size:28px;margin:0 0 8px;letter-spacing:4px;">VENCEDORES</h1>
+      <p style="color:#7ab8d9;margin:0;font-size:13px;letter-spacing:2px;">EN LA NIEVE</p>
+    </div>
+    <div style="background:white;border-radius:16px;padding:32px;margin-bottom:20px;text-align:center;">
+      <h2 style="color:#1e293b;margin:0 0 8px;font-size:20px;">Verification Code / Codigo de Verificacion</h2>
+      <p style="color:#64748b;margin:0 0 24px;font-size:14px;">Use this code to verify your identity</p>
+      <div style="background:#f0f9ff;border:2px dashed #1e5b8a;border-radius:12px;padding:24px;margin:0 auto 24px;max-width:280px;">
+        <span th:text="${code}" style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1e293b;font-family:monospace;">000000</span>
+      </div>
+      <p style="color:#94a3b8;font-size:13px;margin:0;">
+        This code expires in 10 minutes.<br/>
+        Este codigo expira en 10 minutos.
+      </p>
+    </div>
+    <p style="text-align:center;color:#334155;font-size:11px;margin:0;">
+      Vencedores Ski Group
+    </p>
+  </div>
+</body>
+</html>

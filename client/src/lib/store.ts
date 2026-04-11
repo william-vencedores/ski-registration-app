@@ -17,6 +17,9 @@ interface AppStore {
   setFormData: (data: Partial<FormData>) => void
   resetForm: () => void
 
+  isReturningUser: boolean
+  setIsReturningUser: (val: boolean) => void
+
   confirmationId: string
   setConfirmationId: (id: string) => void
 
@@ -39,7 +42,10 @@ export const useAppStore = create<AppStore>((set) => ({
 
   formData: initialFormData,
   setFormData: (data) => set((state) => ({ formData: { ...state.formData, ...data } })),
-  resetForm: () => set({ formData: initialFormData, currentStep: 0, confirmationId: '', disclosureAcceptances: [], paymentInfo: null }),
+  resetForm: () => set({ formData: initialFormData, currentStep: 0, confirmationId: '', disclosureAcceptances: [], paymentInfo: null, isReturningUser: false }),
+
+  isReturningUser: false,
+  setIsReturningUser: (val) => set({ isReturningUser: val }),
 
   confirmationId: '',
   setConfirmationId: (id) => set({ confirmationId: id }),

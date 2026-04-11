@@ -36,6 +36,36 @@ public class EmailService {
     }
 
     @Async
+    public void sendVerificationCodeAsync(String to, String code) {
+        if (smtpUser == null || smtpUser.isBlank()) {
+            log.info("[Email] SMTP not configured — skipping verification email (code: {})", code);
+            return;
+        }
+
+        try {
+            var context = new Context();
+            context.setVariable("code", code);
+
+            String html = templateEngine.process("verification-code-email", context);
+
+            var message = mailSender.createMimeMessage();
+            var helper = new MimeMessageHelper(message, true, "UTF-8");
+            String from = (emailFrom != null && !emailFrom.isBlank())
+                    ? emailFrom
+                    : "\"Vencedores Ski\" <" + smtpUser + ">";
+            helper.setFrom(from);
+            helper.setTo(to);
+            helper.setSubject("Vencedores Ski — Verification Code");
+            helper.setText(html, true);
+
+            mailSender.send(message);
+            log.info("[Email] Verification code sent to {}", to);
+        } catch (MessagingException e) {
+            log.error("[Email] Failed to send verification code: {}", e.getMessage());
+        }
+    }
+
+    @Async
     public void sendConfirmationEmailAsync(String to, String name, String eventName,
                                            String confirmationId, double total) {
         if (smtpUser == null || smtpUser.isBlank()) {

@@ -95,7 +95,7 @@ function PaymentForm() {
 
         setConfirmationId(paymentIntent.id.slice(-8).toUpperCase())
         setPaymentInfo({ totalPaid: data.chargeAmount, totalOwed: data.totalOwed })
-        setCurrentStep(6)
+        setCurrentStep(7)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'An error occurred. Please try again.'

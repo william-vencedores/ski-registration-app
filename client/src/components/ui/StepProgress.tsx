@@ -5,13 +5,14 @@ export default function StepProgress() {
   const { currentStep } = useAppStore()
   const { t } = useTranslation()
   const steps = t.steps
+  const formStep = currentStep - 1 // offset for returning user prompt at step 0
 
   return (
     <div className="mb-6">
       {/* Dots + Lines */}
       <div className="flex items-center">
         {steps.map((_, i) => {
-          const status = i < currentStep ? 'done' : i === currentStep ? 'active' : 'todo'
+          const status = i < formStep ? 'done' : i === formStep ? 'active' : 'todo'
           return (
             <div key={i} className="flex items-center flex-1 last:flex-none">
               <div className={`step-dot ${
@@ -23,7 +24,7 @@ export default function StepProgress() {
               </div>
               {i < steps.length - 1 && (
                 <div className={`flex-1 h-0.5 transition-colors duration-300 ${
-                  i < currentStep ? 'bg-pine-light' : 'bg-white/10'
+                  i < formStep ? 'bg-pine-light' : 'bg-white/10'
                 }`} />
               )}
             </div>
@@ -33,7 +34,7 @@ export default function StepProgress() {
       {/* Labels */}
       <div className="flex justify-between mt-2">
         {steps.map((label, i) => {
-          const status = i < currentStep ? 'done' : i === currentStep ? 'active' : 'todo'
+          const status = i < formStep ? 'done' : i === formStep ? 'active' : 'todo'
           return (
             <div
               key={i}

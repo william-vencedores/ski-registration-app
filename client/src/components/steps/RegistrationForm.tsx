@@ -4,6 +4,7 @@ import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import type { FormData } from '../../lib/events'
 import StepProgress from '../ui/StepProgress'
+import ReturningUserPrompt from './ReturningUserPrompt'
 import Step1Personal from './Step1Personal'
 import Step2Emergency from './Step2Emergency'
 import Step3Level from './Step3Level'
@@ -22,8 +23,11 @@ const stepTitles = (t: ReturnType<typeof import('../../hooks/useTranslation').us
 ]
 
 function validate(step: number, formData: FormData, t: ReturnType<typeof import('../../hooks/useTranslation').useTranslation>['t']) {
+  // step 0 is the returning user prompt — no validation
+  // form steps are 1-6, mapped to validation indices 0-5
+  const formStep = step - 1
   const errors: Record<string, string> = {}
-  if (step === 0) {
+  if (formStep === 0) {
     if (!formData.firstName.trim()) errors.firstName = t.required
     if (!formData.lastName.trim()) errors.lastName = t.required
     if (!formData.email.trim()) errors.email = t.required
@@ -32,15 +36,15 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
     if (!formData.city.trim()) errors.city = t.required
     if (!formData.state.trim()) errors.state = t.required
   }
-  if (step === 1) {
+  if (formStep === 1) {
     if (!formData.emergencyName.trim()) errors.emergencyName = t.required
     if (!formData.emergencyPhone.trim()) errors.emergencyPhone = t.required
     if (!formData.emergencyRelation || formData.emergencyRelation === '—') errors.emergencyRelation = t.required
   }
-  if (step === 2) {
+  if (formStep === 2) {
     if (!formData.skillLevel) errors.skillLevel = t.skillRequired
   }
-  if (step === 4) {
+  if (formStep === 4) {
     if (!formData.liabilityAccepted || !formData.medicalAccepted) errors.waivers = t.acceptBoth
     if (!formData.signature.trim()) errors.signature = t.signRequired
   }
@@ -59,9 +63,11 @@ export default function RegistrationForm() {
 
   if (!selectedEvent) return null
 
-  const isSuccess = currentStep === 6
+  const isPrompt = currentStep === 0
+  const isSuccess = currentStep === 7
+  const formStep = currentStep - 1 // 0-5 for form steps
   const titles = stepTitles(t)
-  const currentTitle = !isSuccess ? titles[currentStep] : null
+  const currentTitle = (!isPrompt && !isSuccess) ? titles[formStep] : null
 
   const goNext = () => {
     const errs = validate(currentStep, formData, t)
@@ -93,7 +99,9 @@ export default function RegistrationForm() {
       className="px-4 pb-24 max-w-2xl mx-auto w-full"
     >
       <div className="card">
-        {isSuccess ? (
+        {isPrompt ? (
+          <ReturningUserPrompt />
+        ) : isSuccess ? (
           <SuccessScreen />
         ) : (
           <>
@@ -104,7 +112,7 @@ export default function RegistrationForm() {
               <h2 className="card-title">{currentTitle?.title}</h2>
               <p className="card-subtitle">{currentTitle?.sub}</p>
               <div className="section-sep">
-                <span>{t.steps[currentStep]}</span>
+                <span>{t.steps[formStep]}</span>
               </div>
             </div>
 
@@ -117,24 +125,22 @@ export default function RegistrationForm() {
                 exit={{ x: dir * -40, opacity: 0 }}
                 transition={{ duration: 0.22, ease: 'easeInOut' }}
               >
-                {stepComponents[currentStep]}
+                {stepComponents[formStep]}
               </motion.div>
             </AnimatePresence>
 
             {/* Navigation buttons — skip for payment step (has its own submit) */}
-            {currentStep < 5 && (
-              <div className={`flex gap-3 mt-7 ${currentStep === 0 ? 'justify-end' : 'justify-between'}`}>
-                {currentStep > 0 && (
-                  <button type="button" onClick={goBack} className="btn-ghost">
-                    {t.back}
-                  </button>
-                )}
+            {formStep < 5 && (
+              <div className="flex gap-3 mt-7 justify-between">
+                <button type="button" onClick={goBack} className="btn-ghost">
+                  {t.back}
+                </button>
                 <button type="button" onClick={goNext} className="btn-primary">
                   {t.next}
                 </button>
               </div>
             )}
-            {currentStep === 5 && (
+            {formStep === 5 && (
               <div className="flex justify-start mt-5">
                 <button type="button" onClick={goBack} className="btn-ghost">
                   {t.back}

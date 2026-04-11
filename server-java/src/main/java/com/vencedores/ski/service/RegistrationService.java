@@ -45,6 +45,8 @@ public class RegistrationService {
         item.put("SK", s("REG#" + confirmationId));
         item.put("GSI1PK", s("REG#" + confirmationId));
         item.put("GSI1SK", s("METADATA"));
+        item.put("GSI2PK", s("EMAIL#" + req.getEmail().toLowerCase().trim()));
+        item.put("GSI2SK", s(now));
         item.put("id", s(confirmationId));
         item.put("createdAt", s(now));
         item.put("eventId", s(req.getEventId()));

@@ -60,6 +60,8 @@ This is a **monorepo** with a React/Vite frontend (`client/`) and a Spring Boot/
   - `POST /api/admin/registrations/:id/email` — resend confirmation
   - `GET /api/admin/stats` — per-event summary
   - `POST /api/webhook` — Stripe webhook
+  - `POST /api/returning/send-code` — send 6-digit verification code to email
+  - `POST /api/returning/verify-code` — verify code, return profile data for returning users
   - `GET /api/events` — public, list active events
   - `GET /api/events/:id` — public, single event
   - `GET /api/events/:id/disclosures` — public, event disclosures for registration form

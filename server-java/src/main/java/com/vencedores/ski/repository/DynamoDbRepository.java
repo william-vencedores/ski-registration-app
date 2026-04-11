@@ -166,7 +166,9 @@ public class DynamoDbRepository {
                             AttributeDefinition.builder().attributeName("PK").attributeType(ScalarAttributeType.S).build(),
                             AttributeDefinition.builder().attributeName("SK").attributeType(ScalarAttributeType.S).build(),
                             AttributeDefinition.builder().attributeName("GSI1PK").attributeType(ScalarAttributeType.S).build(),
-                            AttributeDefinition.builder().attributeName("GSI1SK").attributeType(ScalarAttributeType.S).build()
+                            AttributeDefinition.builder().attributeName("GSI1SK").attributeType(ScalarAttributeType.S).build(),
+                            AttributeDefinition.builder().attributeName("GSI2PK").attributeType(ScalarAttributeType.S).build(),
+                            AttributeDefinition.builder().attributeName("GSI2SK").attributeType(ScalarAttributeType.S).build()
                     )
                     .globalSecondaryIndexes(
                             GlobalSecondaryIndex.builder()
@@ -174,6 +176,14 @@ public class DynamoDbRepository {
                                     .keySchema(
                                             KeySchemaElement.builder().attributeName("GSI1PK").keyType(KeyType.HASH).build(),
                                             KeySchemaElement.builder().attributeName("GSI1SK").keyType(KeyType.RANGE).build()
+                                    )
+                                    .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                                    .build(),
+                            GlobalSecondaryIndex.builder()
+                                    .indexName("GSI2")
+                                    .keySchema(
+                                            KeySchemaElement.builder().attributeName("GSI2PK").keyType(KeyType.HASH).build(),
+                                            KeySchemaElement.builder().attributeName("GSI2SK").keyType(KeyType.RANGE).build()
                                     )
                                     .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
                                     .build()

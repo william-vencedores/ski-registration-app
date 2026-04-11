@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/registration/**").permitAll()
                         .requestMatchers("/api/webhook").permitAll()
                         .requestMatchers("/api/events/**").permitAll()
+                        .requestMatchers("/api/returning/**").permitAll()
                         // Admin endpoints require authentication
                         .requestMatchers("/api/admin/**").authenticated()
                         .requestMatchers("/api/auth/me").authenticated()
