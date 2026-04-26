@@ -55,7 +55,6 @@ export default function Gallery() {
           </div>
         ))}
       </div>
-      <p className="text-center mt-2.5 text-xs text-white/30 italic">{t.galleryNote}</p>
     </div>
   )
 }
