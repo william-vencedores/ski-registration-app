@@ -24,3 +24,15 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Lambda build output
+server-lambda/dist/
+server-lambda/.build/
+server-lambda/.aws-sam/
+
+# SAM config (contains secrets)
+server-lambda/samconfig.yaml
+server-lambda/samconfig.toml
+
+# Misc build artifacts
+server-lambda/out.json

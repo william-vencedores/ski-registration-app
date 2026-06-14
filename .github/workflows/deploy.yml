@@ -1,4 +1,4 @@
-name: Deploy to AWS Elastic Beanstalk
+name: Deploy to AWS
 
 on:
   push:
@@ -6,15 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # ── Deploy frontend to S3 + CloudFront ──────────────────
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # ── Build frontend ──────────────────────────────────────
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install client dependencies
         run: cd client && npm ci
@@ -25,38 +25,62 @@ jobs:
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
 
-      # ── Build Java backend ──────────────────────────────────
-      - uses: actions/setup-java@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          distribution: corretto
-          java-version: 21
-          cache: maven
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Copy client build into Spring Boot static resources
+      - name: Deploy to S3
+        run: aws s3 sync client/dist/ s3://${{ secrets.S3_FRONTEND_BUCKET }} --delete
+
+      - name: Invalidate CloudFront cache
         run: |
-          mkdir -p server-java/src/main/resources/public
-          cp -r client/dist/* server-java/src/main/resources/public/
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
 
-      - name: Build Java backend
-        run: cd server-java && mvn clean package -DskipTests -q
+  # ── Deploy backend via SAM ──────────────────────────────
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      # ── Package for Elastic Beanstalk ───────────────────────
-      - name: Create deployment package
-        run: |
-          mkdir -p deploy
-          cp server-java/target/vencedores-ski-0.1.0.jar deploy/
-          cp server-java/Procfile deploy/
-          cd deploy
-          zip -r ../deploy.zip .
-
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v22
+      - uses: actions/setup-node@v4
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: ${{ secrets.EB_APP_NAME }}
-          environment_name: ${{ secrets.EB_ENV_NAME }}
-          region: ${{ secrets.AWS_REGION }}
-          version_label: ${{ github.sha }}-${{ github.run_number }}
-          use_existing_version_if_available: true
-          deployment_package: deploy.zip
+          node-version: 22
+
+      - name: Install and build Lambda
+        run: |
+          cd server-lambda
+          npm ci
+          npm run build:sam
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - uses: aws-actions/setup-sam@v2
+
+      - name: SAM build
+        run: cd server-lambda && sam build
+
+      - name: SAM deploy
+        run: |
+          cd server-lambda
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              "DynamoTableName=${{ secrets.DYNAMODB_TABLE }}" \
+              "JwtSecret=${{ secrets.JWT_SECRET }}" \
+              "StripeSecretKey=${{ secrets.STRIPE_SECRET_KEY }}" \
+              "StripeWebhookSecret=${{ secrets.STRIPE_WEBHOOK_SECRET || 'none' }}" \
+              "AdminUsername=${{ secrets.ADMIN_USERNAME }}" \
+              "AdminPassword=${{ secrets.ADMIN_PASSWORD }}" \
+              "ClientUrl=${{ secrets.CLIENT_URL }}" \
+              "EmailFrom=${{ secrets.EMAIL_FROM }}"

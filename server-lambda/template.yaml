@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Vencedores Ski - Serverless API
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref DynamoTableName
+
+Parameters:
+  DynamoTableName:
+    Type: String
+    Default: VencedoresSkiTable
+  JwtSecret:
+    Type: String
+    NoEcho: true
+  StripeSecretKey:
+    Type: String
+    NoEcho: true
+  StripeWebhookSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  AdminUsername:
+    Type: String
+    Default: admin
+  AdminPassword:
+    Type: String
+    NoEcho: true
+    Default: changeme
+  ClientUrl:
+    Type: String
+    Default: 'https://www.vencedores.net'
+  EmailFrom:
+    Type: String
+    Default: ''
+
+Resources:
+  # ── API Gateway ────────────────────────────────────────
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref ClientUrl
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - '*'
+        AllowCredentials: true
+
+  # ── Main API Lambda ────────────────────────────────────
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      CodeUri: .build/
+      Description: Main API handler for all routes
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JwtSecret
+          STRIPE_SECRET_KEY: !Ref StripeSecretKey
+          STRIPE_WEBHOOK_SECRET: !Ref StripeWebhookSecret
+          CLIENT_URL: !Ref ClientUrl
+          EMAIL_FROM: !Ref EmailFrom
+          ADMIN_USERNAME: !Ref AdminUsername
+          ADMIN_PASSWORD: !Ref AdminPassword
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoTableName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: '*'
+      Events:
+        CatchAll:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /api/{proxy+}
+            Method: ANY
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /api/health
+            Method: GET
+
+  # ── Seed Lambda ────────────────────────────────────────
+  SeedFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: seed.handler
+      CodeUri: .build/
+      Description: Seeds default admin user and disclosures
+      Timeout: 60
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JwtSecret
+          ADMIN_USERNAME: !Ref AdminUsername
+          ADMIN_PASSWORD: !Ref AdminPassword
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoTableName
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+  ApiFunctionArn:
+    Description: API Lambda Function ARN
+    Value: !GetAtt ApiFunction.Arn
+  SeedFunctionArn:
+    Description: Seed Lambda Function ARN
+    Value: !GetAtt SeedFunction.Arn
