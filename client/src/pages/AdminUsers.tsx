@@ -100,7 +100,7 @@ export default function AdminUsers() {
           </button>
           <button onClick={() => navigate('/admin/disclosures')}
             className="text-xs text-slate-400 hover:text-white transition-colors">
-            Disclosures
+            Waivers
           </button>
           <button onClick={handleLogout}
             className="text-xs px-3 py-1.5 rounded-lg border border-white/10

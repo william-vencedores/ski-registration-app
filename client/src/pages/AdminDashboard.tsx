@@ -72,7 +72,7 @@ export default function AdminDashboard() {
           </button>
           <button onClick={() => navigate('/admin/disclosures')}
             className="text-xs text-slate-400 hover:text-white transition-colors">
-            Disclosures
+            Waivers
           </button>
           <button onClick={() => navigate('/admin/users')}
             className="text-xs text-slate-400 hover:text-white transition-colors">

@@ -80,7 +80,7 @@ export default function AdminDisclosures() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this disclosure? This will remove it from all events.')) return
+    if (!confirm('Delete this waiver? This will remove it from all events.')) return
     try {
       await deleteDisclosure(id)
       await refetch()
@@ -123,7 +123,7 @@ export default function AdminDisclosures() {
                                               shadow-[0_0_14px_rgba(232,184,75,0.35)]" />
           <div>
             <span className="font-cinzel text-sm tracking-[2px] font-bold text-white">VENCEDORES</span>
-            <span className="text-[10px] tracking-widest text-glacier uppercase ml-2">Disclosures</span>
+            <span className="text-[10px] tracking-widest text-glacier uppercase ml-2">Waivers</span>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -151,19 +151,19 @@ export default function AdminDisclosures() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="font-cinzel text-2xl font-bold tracking-widest text-white">Disclosures</h1>
+            <h1 className="font-cinzel text-2xl font-bold tracking-widest text-white">Waivers</h1>
             <p className="text-slate-400 text-sm mt-1">Manage legal waivers and consent forms</p>
           </div>
           <button onClick={openNew}
             className="px-4 py-2 rounded-xl text-xs font-semibold border
                        bg-glacier/20 text-glacier border-glacier/40 hover:bg-glacier/30 transition-all">
-            + New Disclosure
+            + New Waiver
           </button>
         </div>
 
         {/* Event-Disclosure linking section */}
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5 mb-6">
-          <h3 className="text-sm font-semibold text-white mb-3">Link Disclosures to Events</h3>
+          <h3 className="text-sm font-semibold text-white mb-3">Link Waivers to Events</h3>
           <div className="flex gap-2 flex-wrap mb-4">
             {events.map((ev) => (
               <button key={ev.id}
@@ -181,10 +181,10 @@ export default function AdminDisclosures() {
           {linkingEventId && (
             <div className="border-t border-white/8 pt-4">
               <p className="text-xs text-slate-400 mb-3">
-                Linked disclosures for <span className="text-glacier">{events.find(e => e.id === linkingEventId)?.name}</span>:
+                Linked waivers for <span className="text-glacier">{events.find(e => e.id === linkingEventId)?.name}</span>:
               </p>
               {disclosures.length === 0 ? (
-                <p className="text-xs text-slate-500">No disclosures created yet. Create one first.</p>
+                <p className="text-xs text-slate-500">No waivers created yet. Create one first.</p>
               ) : (
                 <div className="grid gap-2">
                   {disclosures.map((d) => {
@@ -223,12 +223,12 @@ export default function AdminDisclosures() {
         {loading ? (
           <div className="text-center py-16">
             <div className="w-8 h-8 border-2 border-white/10 border-t-glacier rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">Loading disclosures...</p>
+            <p className="text-slate-500 text-sm">Loading waivers...</p>
           </div>
         ) : disclosures.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">📋</p>
-            <p className="text-slate-400 text-sm">No disclosures created yet</p>
+            <p className="text-slate-400 text-sm">No waivers created yet</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -293,11 +293,11 @@ export default function AdminDisclosures() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[#0d1a2d] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
             <h2 className="font-cinzel text-lg font-bold text-white mb-4">
-              {isNew ? 'New Disclosure' : 'Edit Disclosure'}
+              {isNew ? 'New Waiver' : 'Edit Waiver'}
             </h2>
             <p className="text-xs text-slate-400 mb-4">
               {isNew
-                ? 'Create a new disclosure document. You can link it to events after creation.'
+                ? 'Create a new waiver document. You can link it to events after creation.'
                 : 'Editing creates a new version. Existing acceptances keep their original version.'}
             </p>
 
@@ -395,7 +395,7 @@ export default function AdminDisclosures() {
                     ${editing.required ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </button>
                 <label className="text-sm text-slate-300">
-                  Required {editing.required ? '— participants must accept this' : '— optional disclosure'}
+                  Required {editing.required ? '— participants must accept this' : '— optional waiver'}
                 </label>
               </div>
             </div>
@@ -410,7 +410,7 @@ export default function AdminDisclosures() {
                 className="px-4 py-2 rounded-xl text-xs font-semibold border
                            bg-glacier/20 text-glacier border-glacier/40 hover:bg-glacier/30 transition-all
                            disabled:opacity-50">
-                {saving ? 'Saving...' : isNew ? 'Create Disclosure' : 'Save & Create New Version'}
+                {saving ? 'Saving...' : isNew ? 'Create Waiver' : 'Save & Create New Version'}
               </button>
             </div>
           </div>
