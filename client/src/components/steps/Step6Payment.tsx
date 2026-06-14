@@ -223,7 +223,6 @@ function PaymentForm() {
         )}
       </button>
 
-      <p className="text-center text-[11px] text-slate-400 italic">{t.testMode}</p>
     </div>
   )
 }

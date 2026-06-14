@@ -62,7 +62,6 @@ export const translations = {
     stripeNote: 'Pago seguro · Powered by',
     payBtn: '💳 Pagar y Confirmar Registro',
     processing: 'Procesando...',
-    testMode: 'Modo prueba: usa 4242 4242 4242 4242 · cualquier fecha y CVC.',
     // Success
     successTitle: '¡REGISTRADO!',
     successSub: 'Bienvenido a Vencedores ❄️',
@@ -165,7 +164,6 @@ export const translations = {
     stripeNote: 'Secure SSL payment · Powered by',
     payBtn: '💳 Pay & Confirm Registration',
     processing: 'Processing...',
-    testMode: 'Test mode: use 4242 4242 4242 4242 · any expiry & CVC.',
     successTitle: 'REGISTERED!',
     successSub: 'Welcome to Vencedores ❄️',
     successVerse: '"But thanks be to God! He gives us the victory through our Lord Jesus Christ." — 1 Corinthians 15:57',
