@@ -7,10 +7,6 @@ client/dist/
 # Environment variables
 .env
 client/.env
-server-java/.env
-
-# Java build output
-server-java/target/
 
 # Editor / OS
 .vscode/
