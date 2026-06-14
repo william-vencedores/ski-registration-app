@@ -25,6 +25,7 @@ export const config = {
   email: {
     from: env('EMAIL_FROM') || env('SMTP_USER'),
     region: env('AWS_REGION', 'us-east-2'),
+    resendApiKey: env('RESEND_API_KEY'),
   },
   cors: {
     allowedOrigins: [

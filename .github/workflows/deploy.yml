@@ -86,4 +86,5 @@ jobs:
               "AdminUsername=${{ secrets.ADMIN_USERNAME }}" \
               "AdminPassword=${{ secrets.ADMIN_PASSWORD }}" \
               "ClientUrl=${{ secrets.CLIENT_URL }}" \
-              "EmailFrom=${{ secrets.EMAIL_FROM }}"
+              "EmailFrom=${{ secrets.EMAIL_FROM }}" \
+              "ResendApiKey=${{ secrets.RESEND_API_KEY || 'none' }}"

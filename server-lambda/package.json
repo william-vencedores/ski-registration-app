@@ -19,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "handlebars": "^4.7.8",
     "jsonwebtoken": "^9.0.2",
+    "resend": "^6.12.4",
     "stripe": "^17.0.0",
     "uuid": "^11.0.0"
   },
