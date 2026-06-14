@@ -1,6 +1,8 @@
-# 🏔️ Vencedores Ski — Registration App
+# Vencedores Ski — Registration App
 
-Bilingual (ES/EN) ski group registration web app for Vencedores, built with **React + Vite + Tailwind CSS** on the frontend and **Express + Stripe** on the backend.
+Bilingual (ES/EN) ski group registration web app for Vencedores, built with **React + Vite + Tailwind CSS** on the frontend and **TypeScript + AWS Lambda** on the backend.
+
+**Live:** https://www.vencedores.net
 
 ---
 
@@ -8,27 +10,32 @@ Bilingual (ES/EN) ski group registration web app for Vencedores, built with **Re
 
 ```
 vencedores-ski/
-├── client/                   # React + Vite frontend
+├── client/                   # React + Vite frontend (hosted on S3 + CloudFront)
 │   ├── src/
-│   │   ├── assets/           # Logo and images
 │   │   ├── components/
 │   │   │   ├── layout/       # Background, Header, Hero, Gallery
 │   │   │   ├── steps/        # Step1–6 form components + SuccessScreen
 │   │   │   └── ui/           # EventSelector, StepProgress
 │   │   ├── hooks/            # useTranslation
-│   │   ├── lib/              # i18n, store (Zustand), events data
+│   │   ├── lib/              # i18n, store (Zustand), adminApi
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   ├── .env.example
-│   ├── vite.config.ts
-│   └── tailwind.config.js
+│   └── vite.config.ts
 │
-└── server/                   # Express backend
+└── server-lambda/            # TypeScript Lambda backend (API Gateway + SAM)
     ├── src/
-    │   ├── lib/              # email.js, events.js
-    │   ├── routes/           # payment.js, registration.js, webhook.js
-    │   └── index.js
-    └── .env.example
+    │   ├── config/           # Environment config
+    │   ├── handlers/         # Route handlers
+    │   ├── middleware/       # JWT auth, CORS, error handling
+    │   ├── repository/       # DynamoDB single-table repository
+    │   ├── services/         # Business logic
+    │   ├── types/            # Request DTOs
+    │   ├── index.ts          # Main Lambda entry point
+    │   └── seed.ts           # Seed Lambda (admin user + disclosures)
+    ├── templates/            # Handlebars email templates
+    ├── template.yaml         # AWS SAM infrastructure
+    └── package.json
 ```
 
 ---
@@ -45,32 +52,51 @@ npm run install:all
 
 **Client** (`client/.env`):
 ```env
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+VITE_GOOGLE_MAPS_API_KEY=...
 ```
 
-**Server** (`server/.env`):
-```env
-PORT=3001
-STRIPE_SECRET_KEY=sk_test_REPLACE_WITH_YOUR_STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET=whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET
-
-# Optional — for confirmation emails
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your@gmail.com
-SMTP_PASS=your_app_password
-```
-
-Get your Stripe keys from: https://dashboard.stripe.com/apikeys
+**Backend** — create `server-lambda/samconfig.yaml` (see `samconfig.yaml` section in CLAUDE.md for required parameters).
 
 ### 3. Run in development
 
 ```bash
-npm run dev
+npm run dev:client   # Frontend → http://localhost:5173
 ```
 
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:3001
+---
+
+## Deployment
+
+Deployment is fully automated via **GitHub Actions** on push to `main`:
+
+- **Frontend**: Built and synced to S3, CloudFront cache invalidated
+- **Backend**: Built and deployed via AWS SAM (`sam build` + `sam deploy`)
+
+### Manual deployment
+
+```bash
+# Frontend
+cd client && npm run build
+aws s3 sync dist/ s3://BUCKET_NAME --delete
+
+# Backend
+cd server-lambda
+npm run build:sam
+sam build
+sam deploy
+```
+
+### Infrastructure
+
+| Component | Service |
+|-----------|---------|
+| Frontend hosting | S3 + CloudFront |
+| API | API Gateway HTTP API (v2) + Lambda |
+| Database | DynamoDB (single-table design) |
+| Email | AWS SES |
+| Payments | Stripe |
+| IaC | AWS SAM (`template.yaml`) |
 
 ---
 
@@ -79,97 +105,20 @@ npm run dev
 ### Test Cards
 | Card Number          | Result              |
 |----------------------|---------------------|
-| 4242 4242 4242 4242  | ✅ Success           |
-| 4000 0000 0000 9995  | ❌ Decline           |
-| 4000 0025 0000 3155  | 🔐 3D Secure prompt  |
+| 4242 4242 4242 4242  | Success             |
+| 4000 0000 0000 9995  | Decline             |
+| 4000 0025 0000 3155  | 3D Secure prompt    |
 
 Use any future expiry date and any 3-digit CVC.
 
-### Webhooks (optional for local dev)
+### Webhooks
 
 ```bash
-# Install Stripe CLI
-brew install stripe/stripe-cli/stripe
-
-# Forward webhook events to your local server
-stripe listen --forward-to localhost:3001/api/webhook
+# Local development
+stripe listen --forward-to localhost:3000/api/webhook
 ```
 
-Copy the webhook signing secret from the CLI output into `server/.env` as `STRIPE_WEBHOOK_SECRET`.
-
----
-
-## Adding Events
-
-Edit `client/src/lib/events.ts` to add future events:
-
-```ts
-{
-  id: 'venc2029',
-  icon: '🏔️',
-  nameEs: 'Vencedores en la Nieve 2029',
-  nameEn: 'Vencedores on the Snow 2029',
-  metaEs: 'Febrero 2029 · Park City, UT',
-  metaEn: 'February 2029 · Park City, UT',
-  price: 160,
-  processing: 4.65,
-}
-```
-
-Also mirror the entry in `server/src/lib/events.js`.
-
----
-
-## Adding a Real Database
-
-The server currently uses an in-memory array. Replace it in `server/src/routes/registration.js`:
-
-**Supabase example:**
-```js
-import { createClient } from '@supabase/supabase-js'
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
-
-// Replace: registrations.push(registrationRecord)
-const { error } = await supabase.from('registrations').insert(registrationRecord)
-```
-
----
-
-## Adding Gallery Photos
-
-Replace the Unsplash placeholders in `client/src/components/layout/Gallery.tsx`:
-
-```tsx
-const photos = [
-  { src: '/photos/vencedores-2026-1.jpg', alt: 'Group skiing', span: true },
-  { src: '/photos/vencedores-2026-2.jpg', alt: 'Summit' },
-  // ...
-]
-```
-
-Place photos in `client/public/photos/`.
-
----
-
-## Production Deployment
-
-**Frontend** — Deploy to Vercel / Netlify:
-```bash
-cd client && npm run build
-# Upload dist/ folder
-```
-
-**Backend** — Deploy to Railway / Render / Fly.io:
-```bash
-cd server && npm start
-```
-
-Update `vite.config.ts` proxy target for production:
-```ts
-proxy: {
-  '/api': { target: 'https://your-api.railway.app' }
-}
-```
+Production webhook endpoint: `https://www.vencedores.net/api/webhook`
 
 ---
 
@@ -177,10 +126,13 @@ proxy: {
 
 | Layer     | Tech                                        |
 |-----------|---------------------------------------------|
-| Frontend  | React 18, Vite, TypeScript                  |
-| Styling   | Tailwind CSS v3, Framer Motion              |
+| Frontend  | React, Vite, TypeScript                     |
+| Styling   | Tailwind CSS, Framer Motion                 |
 | State     | Zustand                                     |
 | Payments  | Stripe Elements + PaymentIntents API        |
-| Backend   | Express 4, Node.js                          |
-| Email     | Nodemailer (Gmail / any SMTP)               |
+| Backend   | TypeScript, AWS Lambda, Node.js 22          |
+| Database  | DynamoDB (single-table)                     |
+| Email     | AWS SES + Handlebars templates              |
+| Infra     | AWS SAM, API Gateway, S3, CloudFront        |
+| CI/CD     | GitHub Actions                              |
 | i18n      | Custom ES/EN translation system             |
