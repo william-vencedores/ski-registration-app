@@ -127,6 +127,27 @@ export async function deleteEvent(eventId: string): Promise<void> {
   if (!existing) {
     throw new NotFoundError(`Event not found: ${eventId}`);
   }
+
+  // Delete all registrations and their disclosure acceptances
+  const registrations = await repo.queryByPkAndSkPrefix(`EVENT#${eventId}`, 'REG#');
+  for (const reg of registrations) {
+    const regId = reg.id as string;
+    // Delete disclosure acceptances for this registration
+    const acceptances = await repo.queryByPkAndSkPrefix(`REG#${regId}`, 'DISCLOSURE#');
+    for (const acc of acceptances) {
+      await repo.deleteItem(acc.PK as string, acc.SK as string);
+    }
+    // Delete the registration
+    await repo.deleteItem(reg.PK as string, reg.SK as string);
+  }
+
+  // Delete event-disclosure links
+  const disclosureLinks = await repo.queryByPkAndSkPrefix(`EVENT#${eventId}`, 'DISCLOSURE#');
+  for (const link of disclosureLinks) {
+    await repo.deleteItem(link.PK as string, link.SK as string);
+  }
+
+  // Delete the event
   await repo.deleteItem(`EVENT#${eventId}`, 'METADATA');
 }
 
