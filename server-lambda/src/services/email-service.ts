@@ -14,6 +14,7 @@ const templatesDir = join(__dirname, '..', 'templates');
 
 let confirmationTemplate: Handlebars.TemplateDelegate | null = null;
 let verificationTemplate: Handlebars.TemplateDelegate | null = null;
+let zellePendingTemplate: Handlebars.TemplateDelegate | null = null;
 
 function getConfirmationTemplate(): Handlebars.TemplateDelegate {
   if (!confirmationTemplate) {
@@ -29,6 +30,14 @@ function getVerificationTemplate(): Handlebars.TemplateDelegate {
     verificationTemplate = Handlebars.compile(html);
   }
   return verificationTemplate;
+}
+
+function getZellePendingTemplate(): Handlebars.TemplateDelegate {
+  if (!zellePendingTemplate) {
+    const html = readFileSync(join(templatesDir, 'zelle-pending-email.html'), 'utf-8');
+    zellePendingTemplate = Handlebars.compile(html);
+  }
+  return zellePendingTemplate;
 }
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
@@ -102,4 +111,33 @@ export async function sendConfirmationEmail(
   });
 
   await sendEmail(to, `✓ Registro Confirmado — ${eventName} #${confirmationId}`, html);
+}
+
+export async function sendZellePendingEmail(
+  to: string,
+  name: string,
+  eventName: string,
+  confirmationId: string,
+  amount: number
+): Promise<void> {
+  if (!config.email.from) {
+    console.info('[Email] Email sender not configured — skipping Zelle pending email');
+    return;
+  }
+
+  const now = new Date();
+  const date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+
+  const html = getZellePendingTemplate()({
+    name,
+    eventName,
+    confirmationId: `#${confirmationId}`,
+    amount: `$${amount.toFixed(2)} USD`,
+    date,
+    zelleEmail: config.zelle.email,
+    zelleName: config.zelle.recipientName,
+    emailFrom: config.email.from,
+  });
+
+  await sendEmail(to, `⏳ Registro Recibido (Pago Zelle Pendiente) — ${eventName} #${confirmationId}`, html);
 }

@@ -249,13 +249,19 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1
                           rounded-full text-[10px] font-semibold border
-                          ${reg.paymentStatus === 'partial'
-                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                            : 'bg-pine/20 text-[#7ddc9a] border-pine/40'
+                          ${reg.paymentStatus === 'pending'
+                            ? 'bg-orange-500/15 text-orange-400 border-orange-500/30'
+                            : reg.paymentStatus === 'partial'
+                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                              : 'bg-pine/20 text-[#7ddc9a] border-pine/40'
                           }`}>
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
-                            ${reg.paymentStatus === 'partial' ? 'bg-amber-400' : 'bg-[#7ddc9a]'}`} />
-                          {reg.paymentStatus === 'partial' ? 'Partial' : 'Paid'}
+                            ${reg.paymentStatus === 'pending'
+                              ? 'bg-orange-400'
+                              : reg.paymentStatus === 'partial' ? 'bg-amber-400' : 'bg-[#7ddc9a]'}`} />
+                          {reg.paymentStatus === 'pending'
+                            ? (reg.paymentMethod === 'zelle' ? 'Zelle · Pending' : 'Pending')
+                            : reg.paymentStatus === 'partial' ? 'Partial' : 'Paid'}
                         </span>
                       </td>
 

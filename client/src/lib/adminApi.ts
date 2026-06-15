@@ -25,9 +25,11 @@ export interface Registration {
   liabilityAccepted: boolean
   medicalAccepted: boolean
   signature: string
+  paymentMethod?: 'stripe' | 'zelle'
   totalPaid: number
   totalOwed: number
-  paymentStatus: 'paid' | 'partial' | ''
+  zelleAmount?: number
+  paymentStatus: 'paid' | 'partial' | 'pending' | ''
   attended?: boolean
   attendanceMarkedAt?: string
   attendanceMarkedBy?: string
@@ -99,6 +101,11 @@ export async function toggleAttendance(id: string, attended: boolean) {
 
 export async function resendEmail(id: string) {
   const res = await axios.post(`/api/admin/registrations/${id}/email`)
+  return res.data
+}
+
+export async function markAsPaid(id: string) {
+  const res = await axios.patch(`/api/admin/registrations/${id}/paid`)
   return res.data
 }
 

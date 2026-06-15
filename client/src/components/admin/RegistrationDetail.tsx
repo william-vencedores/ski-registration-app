@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Registration } from '../../lib/adminApi'
-import { toggleAttendance, resendEmail } from '../../lib/adminApi'
+import { toggleAttendance, resendEmail, markAsPaid } from '../../lib/adminApi'
 
 const SKILL_LABELS: Record<string, string> = {
   beginner: '🎿 Beginner', intermediate: '⛷️ Intermediate',
@@ -19,6 +19,7 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
   const [loadingAttend, setLoadingAttend] = useState(false)
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sent' | 'error'>('idle')
+  const [loadingPaid, setLoadingPaid] = useState(false)
 
   const handleAttendance = async () => {
     if (!reg) return
@@ -30,6 +31,19 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
       console.error(e)
     } finally {
       setLoadingAttend(false)
+    }
+  }
+
+  const handleMarkPaid = async () => {
+    if (!reg) return
+    setLoadingPaid(true)
+    try {
+      await markAsPaid(reg.id)
+      onUpdate()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingPaid(false)
     }
   }
 
@@ -118,9 +132,20 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
 
               <Section title="Event & Payment">
                 <Row label="Event" value={reg.eventName} />
+                <Row label="Method" value={reg.paymentMethod === 'zelle' ? '🏦 Zelle' : '💳 Card'} />
                 <Row label="Total Paid" value={`$${reg.totalPaid?.toFixed(2)} USD`} />
                 {reg.totalOwed > 0 && (
                   <Row label="Total Owed" value={`$${reg.totalOwed?.toFixed(2)} USD`} />
+                )}
+                {reg.paymentMethod === 'zelle' && (reg.zelleAmount ?? 0) > 0 && (
+                  <Row label="Zelle Amount" value={`$${reg.zelleAmount?.toFixed(2)} USD`} />
+                )}
+                {reg.paymentStatus === 'pending' && (
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 mt-2">
+                    <span className="text-xs text-orange-400 font-semibold">
+                      {reg.paymentMethod === 'zelle' ? 'Zelle payment pending verification' : 'Payment pending'}
+                    </span>
+                  </div>
                 )}
                 {reg.paymentStatus === 'partial' && (
                   <>
@@ -160,6 +185,22 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
 
               {/* Actions */}
               <div className="flex flex-col gap-3 pt-2">
+                {(reg.paymentStatus === 'pending' || reg.paymentStatus === 'partial') && (
+                  <button
+                    onClick={handleMarkPaid}
+                    disabled={loadingPaid}
+                    className="w-full py-3 rounded-xl font-semibold text-sm
+                               bg-pine/20 text-[#7ddc9a] border border-pine/40
+                               hover:bg-pine/30 transition-all duration-200
+                               flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {loadingPaid
+                      ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      : '✓ Mark as Paid'
+                    }
+                  </button>
+                )}
+
                 <button
                   onClick={handleAttendance}
                   disabled={loadingAttend}

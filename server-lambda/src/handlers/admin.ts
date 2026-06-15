@@ -34,6 +34,15 @@ export async function handleToggleAttendance(event: APIGatewayProxyEventV2, id: 
   }
 }
 
+export async function handleMarkAsPaid(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
+  try {
+    requireAuth(event);
+    return jsonResponse(200, await registrationService.markAsPaid(id));
+  } catch (e) {
+    return handleError(e);
+  }
+}
+
 export async function handleResendEmail(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
   try {
     requireAuth(event);

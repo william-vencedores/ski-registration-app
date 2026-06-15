@@ -23,8 +23,8 @@ interface AppStore {
   confirmationId: string
   setConfirmationId: (id: string) => void
 
-  paymentInfo: { totalPaid: number; totalOwed: number } | null
-  setPaymentInfo: (info: { totalPaid: number; totalOwed: number }) => void
+  paymentInfo: { totalPaid: number; totalOwed: number; method?: 'stripe' | 'zelle'; zelleAmount?: number } | null
+  setPaymentInfo: (info: { totalPaid: number; totalOwed: number; method?: 'stripe' | 'zelle'; zelleAmount?: number }) => void
 
   disclosureAcceptances: DisclosureAcceptance[]
   setDisclosureAcceptances: (acceptances: DisclosureAcceptance[]) => void

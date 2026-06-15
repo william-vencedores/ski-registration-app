@@ -48,9 +48,11 @@ export interface SubmitRegistrationRequest {
   medicalAccepted: boolean;
   signature?: string;
   eventId: string;
-  paymentIntentId: string;
+  paymentMethod?: 'stripe' | 'zelle';
+  paymentIntentId?: string;
   totalPaid: number;
   totalOwed: number;
+  zelleAmount?: number;
   disclosureAcceptances?: DisclosureAcceptanceInput[];
 }
 

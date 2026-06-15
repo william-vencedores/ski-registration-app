@@ -42,6 +42,12 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ''
+  ZelleEmail:
+    Type: String
+    Default: 'info@vencedores.net'
+  ZelleRecipientName:
+    Type: String
+    Default: 'William Mercado'
 
 Resources:
   # ── API Gateway ────────────────────────────────────────
@@ -78,6 +84,8 @@ Resources:
           CLIENT_URL: !Ref ClientUrl
           EMAIL_FROM: !Ref EmailFrom
           RESEND_API_KEY: !Ref ResendApiKey
+          ZELLE_EMAIL: !Ref ZelleEmail
+          ZELLE_RECIPIENT_NAME: !Ref ZelleRecipientName
           ADMIN_USERNAME: !Ref AdminUsername
           ADMIN_PASSWORD: !Ref AdminPassword
       Policies:

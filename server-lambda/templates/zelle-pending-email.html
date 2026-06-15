@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Registro Recibido — Pago Zelle Pendiente</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #0a1628;
+      font-family: 'DM Sans', Arial, sans-serif;
+    "
+  >
+    <div style="max-width: 560px; margin: 0 auto; padding: 40px 20px">
+      <div
+        style="
+          background: linear-gradient(135deg, #1e5b8a, #0d2340);
+          border-radius: 16px;
+          padding: 32px;
+          text-align: center;
+          margin-bottom: 20px;
+        "
+      >
+        <h1
+          style="
+            color: #e8b84b;
+            font-family: Georgia, serif;
+            font-size: 28px;
+            margin: 0 0 8px;
+            letter-spacing: 4px;
+          "
+        >
+          VENCEDORES
+        </h1>
+        <p
+          style="
+            color: #7ab8d9;
+            margin: 0;
+            font-size: 13px;
+            letter-spacing: 2px;
+          "
+        >
+          EN LA NIEVE
+        </p>
+      </div>
+      <div
+        style="
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          margin-bottom: 20px;
+        "
+      >
+        <h2 style="color: #1e293b; margin: 0 0 4px; font-size: 22px">
+          Registro Recibido ⏳
+        </h2>
+        <p style="color: #64748b; margin: 0 0 24px; font-size: 14px">
+          Hola, {{name}} — tu lugar está reservado, pendiente de tu pago por Zelle.
+        </p>
+
+        <div
+          style="
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+          "
+        >
+          <p
+            style="
+              color: #92400e;
+              font-weight: 700;
+              font-size: 14px;
+              margin: 0 0 12px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            "
+          >
+            Instrucciones de pago Zelle
+          </p>
+          <div style="display: flex; justify-content: space-between; padding: 6px 0">
+            <span style="color: #92400e; font-size: 13px">Enviar a (correo)</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{zelleEmail}}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 6px 0">
+            <span style="color: #92400e; font-size: 13px">Nombre del beneficiario</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{zelleName}}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 6px 0">
+            <span style="color: #92400e; font-size: 13px">Monto</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{amount}}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 6px 0">
+            <span style="color: #92400e; font-size: 13px">Nota / Memo</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{confirmationId}}</span>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: #f8fbfe;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              border-bottom: 1px solid #e2e8f0;
+            "
+          >
+            <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px">Evento</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{eventName}}</span>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              border-bottom: 1px solid #e2e8f0;
+            "
+          >
+            <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px">Confirmación</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{confirmationId}}</span>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              border-bottom: 1px solid #e2e8f0;
+            "
+          >
+            <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px">Fecha</span>
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px">{{date}}</span>
+          </div>
+        </div>
+
+        <p style="color: #475569; font-size: 13px; line-height: 1.7; margin: 0">
+          Por favor incluye tu número de confirmación en la nota del pago para que
+          podamos identificarlo. Una vez que recibamos tu pago, confirmaremos tu
+          registro. Tu lugar se mantiene reservado mientras tanto.
+          <br /><br />
+          ¡Que Dios los bendiga abundantemente! ⛷️
+        </p>
+      </div>
+      <p style="text-align: center; color: #334155; font-size: 11px; margin: 0">
+        Vencedores Ski Group ·
+        <a href="mailto:{{emailFrom}}" style="color: #7ab8d9">{{emailFrom}}</a>
+      </p>
+    </div>
+  </body>
+</html>

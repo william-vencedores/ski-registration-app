@@ -27,6 +27,10 @@ export const config = {
     region: env('AWS_REGION', 'us-east-2'),
     resendApiKey: env('RESEND_API_KEY'),
   },
+  zelle: {
+    email: env('ZELLE_EMAIL', 'info@vencedores.net'),
+    recipientName: env('ZELLE_RECIPIENT_NAME', 'William Mercado'),
+  },
   cors: {
     allowedOrigins: [
       env('CLIENT_URL', 'http://localhost:5173'),

@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import * as repo from '../repository/dynamo-repository.js';
 import * as eventService from './event-service.js';
 import * as emailService from './email-service.js';
@@ -7,7 +8,12 @@ import type { SubmitRegistrationRequest } from '../types/requests.js';
 export async function submitRegistration(
   req: SubmitRegistrationRequest
 ): Promise<Record<string, unknown>> {
-  if (!req.firstName || !req.lastName || !req.email || !req.eventId || !req.paymentIntentId) {
+  const isZelle = req.paymentMethod === 'zelle';
+
+  if (!req.firstName || !req.lastName || !req.email || !req.eventId) {
+    throw new BadRequestError('Missing required fields');
+  }
+  if (!isZelle && !req.paymentIntentId) {
     throw new BadRequestError('Missing required fields');
   }
 
@@ -25,10 +31,20 @@ export async function submitRegistration(
   const event = await eventService.getEvent(req.eventId);
   await eventService.decrementSpotsLeft(req.eventId);
 
-  const confirmationId = req.paymentIntentId
-    .substring(req.paymentIntentId.length - 8)
-    .toUpperCase();
+  const confirmationId = isZelle
+    ? randomBytes(4).toString('hex').toUpperCase()
+    : req.paymentIntentId!.substring(req.paymentIntentId!.length - 8).toUpperCase();
   const now = new Date().toISOString();
+
+  // Payment fields differ by method. Zelle is a manual transfer verified later,
+  // so nothing is paid yet and the spot is held as 'pending'.
+  const totalOwed = req.totalOwed;
+  const totalPaid = isZelle ? 0 : req.totalPaid;
+  const paymentStatus = isZelle
+    ? 'pending'
+    : totalPaid >= totalOwed
+      ? 'paid'
+      : 'partial';
 
   // Build registration item
   const item: Record<string, unknown> = {
@@ -69,11 +85,17 @@ export async function submitRegistration(
     medicalAccepted: req.medicalAccepted,
     signature: req.signature ?? '',
     // Payment
-    paymentIntentId: req.paymentIntentId,
-    totalPaid: req.totalPaid,
-    totalOwed: req.totalOwed,
-    paymentStatus: req.totalPaid >= req.totalOwed ? 'paid' : 'partial',
+    paymentMethod: isZelle ? 'zelle' : 'stripe',
+    paymentIntentId: req.paymentIntentId ?? '',
+    totalPaid,
+    totalOwed,
+    paymentStatus,
   };
+
+  // For Zelle, record the amount the participant says they will send (informational).
+  if (isZelle) {
+    item.zelleAmount = req.zelleAmount ?? 0;
+  }
 
   await repo.putItem(item);
 
@@ -92,17 +114,28 @@ export async function submitRegistration(
   }
 
   // Send email (fire-and-forget within Lambda timeout)
-  await emailService.sendConfirmationEmail(
-    req.email,
-    `${req.firstName} ${req.lastName}`,
-    event.name as string,
-    confirmationId,
-    req.totalPaid
-  );
+  if (isZelle) {
+    await emailService.sendZellePendingEmail(
+      req.email,
+      `${req.firstName} ${req.lastName}`,
+      event.name as string,
+      confirmationId,
+      req.zelleAmount ?? 0
+    );
+  } else {
+    await emailService.sendConfirmationEmail(
+      req.email,
+      `${req.firstName} ${req.lastName}`,
+      event.name as string,
+      confirmationId,
+      totalPaid
+    );
+  }
 
   return {
     success: true,
     confirmationId,
+    paymentStatus,
     message: 'Registration successful',
   };
 }
@@ -153,13 +186,23 @@ export async function toggleAttendance(
 
 export async function resendEmail(regId: string): Promise<Record<string, unknown>> {
   const reg = await getRegistration(regId);
-  await emailService.sendConfirmationEmail(
-    reg.email as string,
-    `${reg.firstName} ${reg.lastName}`,
-    reg.eventName as string,
-    reg.id as string,
-    reg.totalPaid as number
-  );
+  if (reg.paymentMethod === 'zelle' && reg.paymentStatus === 'pending') {
+    await emailService.sendZellePendingEmail(
+      reg.email as string,
+      `${reg.firstName} ${reg.lastName}`,
+      reg.eventName as string,
+      reg.id as string,
+      (reg.zelleAmount as number) || 0
+    );
+  } else {
+    await emailService.sendConfirmationEmail(
+      reg.email as string,
+      `${reg.firstName} ${reg.lastName}`,
+      reg.eventName as string,
+      reg.id as string,
+      reg.totalPaid as number
+    );
+  }
   return { success: true, sentTo: reg.email };
 }
 
@@ -195,6 +238,28 @@ export async function payBalance(
     totalOwed,
     paymentStatus: newStatus,
   };
+}
+
+export async function markAsPaid(regId: string): Promise<Record<string, unknown>> {
+  const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${regId}`, 'GSI1SK', null);
+  if (items.length === 0) {
+    throw new NotFoundError(`Registration not found: ${regId}`);
+  }
+
+  const item = items[0];
+  const pk = item.PK as string;
+  const sk = item.SK as string;
+  const totalOwed = (item.totalOwed as number) || 0;
+
+  await repo.updateItem(
+    pk,
+    sk,
+    'SET totalPaid = :paid, paymentStatus = :status',
+    { ':paid': totalOwed, ':status': 'paid' },
+    null
+  );
+
+  return { id: regId, totalPaid: totalOwed, totalOwed, paymentStatus: 'paid' };
 }
 
 export async function getStats(): Promise<Record<string, unknown>> {
@@ -270,8 +335,10 @@ function itemToRegistrationMap(item: Record<string, unknown>): Record<string, un
     liabilityAccepted: item.liabilityAccepted ?? false,
     medicalAccepted: item.medicalAccepted ?? false,
     signature: item.signature ?? '',
+    paymentMethod: item.paymentMethod ?? 'stripe',
     totalPaid: item.totalPaid ?? 0,
     totalOwed: item.totalOwed ?? 0,
+    zelleAmount: item.zelleAmount ?? 0,
     paymentStatus: item.paymentStatus ?? '',
     attended: item.attended ?? false,
     attendanceMarkedAt: item.attendanceMarkedAt ?? '',
