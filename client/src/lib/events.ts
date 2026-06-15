@@ -87,6 +87,18 @@ export function useEvents() {
   return { events, loading }
 }
 
+// Check whether an email is already registered for an event (before payment)
+export async function checkRegistration(eventId: string, email: string): Promise<boolean> {
+  try {
+    const { data } = await axios.post('/api/registration/check', { eventId, email })
+    return data.registered === true
+  } catch {
+    // On a network/server error, don't block the user — the server-side guard
+    // still prevents a duplicate charge at payment time.
+    return false
+  }
+}
+
 // Fetch disclosures for an event
 export function useEventDisclosures(eventId: string | undefined) {
   const [disclosures, setDisclosures] = useState<Disclosure[]>([])

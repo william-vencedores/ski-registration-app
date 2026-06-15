@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { config } from '../config/index.js';
 import * as eventService from './event-service.js';
+import * as registrationService from './registration-service.js';
 import * as repo from '../repository/dynamo-repository.js';
 import { BadRequestError } from '../middleware/error-handler.js';
 
@@ -13,6 +14,12 @@ export async function createPaymentIntent(
   partialPayment: boolean
 ): Promise<Record<string, unknown>> {
   const event = await eventService.getEvent(eventId);
+
+  // Safety net: never charge a card for someone already registered for this event.
+  // The client also gates this earlier, but this guarantees no duplicate charge.
+  if (await registrationService.isAlreadyRegistered(eventId, email)) {
+    throw new BadRequestError('You are already registered for this event.');
+  }
 
   const price = (event.price as number) || 0;
   const deposit = (event.deposit as number) || 0;

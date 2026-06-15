@@ -12,6 +12,19 @@ export async function handleSubmit(event: APIGatewayProxyEventV2): Promise<APIGa
   }
 }
 
+export async function handleCheckRegistration(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  try {
+    const body = JSON.parse(event.body || '{}');
+    if (!body.eventId || !body.email) {
+      return jsonResponse(400, { error: 'eventId and email are required' });
+    }
+    const registered = await registrationService.isAlreadyRegistered(body.eventId, body.email);
+    return jsonResponse(200, { registered });
+  } catch (e) {
+    return handleError(e);
+  }
+}
+
 export async function handlePayBalance(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
     const body = JSON.parse(event.body || '{}');

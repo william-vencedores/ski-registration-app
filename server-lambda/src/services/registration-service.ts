@@ -5,6 +5,13 @@ import * as emailService from './email-service.js';
 import { BadRequestError, NotFoundError } from '../middleware/error-handler.js';
 import type { SubmitRegistrationRequest } from '../types/requests.js';
 
+/** True if this email already has a registration for the given event. */
+export async function isAlreadyRegistered(eventId: string, email: string): Promise<boolean> {
+  const normalizedEmail = email.toLowerCase().trim();
+  const existingRegs = await repo.queryGsi('GSI2', 'GSI2PK', `EMAIL#${normalizedEmail}`, 'GSI2SK', null);
+  return existingRegs.some((existing) => ((existing.eventId as string) || '') === eventId);
+}
+
 export async function submitRegistration(
   req: SubmitRegistrationRequest
 ): Promise<Record<string, unknown>> {
@@ -18,13 +25,8 @@ export async function submitRegistration(
   }
 
   // Check for duplicate registration (same email + same event)
-  const normalizedEmail = req.email.toLowerCase().trim();
-  const existingRegs = await repo.queryGsi('GSI2', 'GSI2PK', `EMAIL#${normalizedEmail}`, 'GSI2SK', null);
-  for (const existing of existingRegs) {
-    const existingEventId = (existing.eventId as string) || '';
-    if (req.eventId === existingEventId) {
-      throw new BadRequestError('You are already registered for this event.');
-    }
+  if (await isAlreadyRegistered(req.eventId, req.email)) {
+    throw new BadRequestError('You are already registered for this event.');
   }
 
   // Validate event exists and decrement spots

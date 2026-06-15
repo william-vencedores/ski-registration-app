@@ -11,7 +11,7 @@ import {
   handleAttachDisclosure, handleDetachDisclosure,
 } from './handlers/events.js';
 // Registration handlers
-import { handleSubmit, handlePayBalance } from './handlers/registration.js';
+import { handleSubmit, handlePayBalance, handleCheckRegistration } from './handlers/registration.js';
 // Payment handlers
 import { handleCreateIntent, handleCreateBalanceIntent } from './handlers/payment.js';
 // Webhook handler
@@ -91,6 +91,9 @@ async function route(
   // ── Registration ───────────────────────────────────────
   if (method === 'POST' && path === '/api/registration/submit') {
     return handleSubmit(event);
+  }
+  if (method === 'POST' && path === '/api/registration/check') {
+    return handleCheckRegistration(event);
   }
   if (method === 'POST' && path === '/api/registration/pay-balance') {
     return handlePayBalance(event);

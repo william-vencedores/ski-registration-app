@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import type { FormData } from '../../lib/events'
+import { checkRegistration } from '../../lib/events'
 import StepProgress from '../ui/StepProgress'
 import ReturningUserPrompt from './ReturningUserPrompt'
 import Step1Personal from './Step1Personal'
@@ -56,6 +57,7 @@ export default function RegistrationForm() {
   const { t } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [dir, setDir] = useState(1)
+  const [checking, setChecking] = useState(false)
   const formRef = useRef<HTMLDivElement>(null)
 
   // Reset errors when step changes
@@ -69,9 +71,19 @@ export default function RegistrationForm() {
   const titles = stepTitles(t)
   const currentTitle = (!isPrompt && !isSuccess) ? titles[formStep] : null
 
-  const goNext = () => {
+  const goNext = async () => {
     const errs = validate(currentStep, formData, t)
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
+
+    // After step 1 (personal info / email), block if already registered for this
+    // event so they never reach the payment step.
+    if (currentStep === 1 && selectedEvent) {
+      setChecking(true)
+      const already = await checkRegistration(selectedEvent.id, formData.email)
+      setChecking(false)
+      if (already) { setErrors({ email: t.alreadyRegisteredError }); return }
+    }
+
     setDir(1)
     setCurrentStep(currentStep + 1)
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -135,8 +147,15 @@ export default function RegistrationForm() {
                 <button type="button" onClick={goBack} className="btn-ghost">
                   {t.back}
                 </button>
-                <button type="button" onClick={goNext} className="btn-primary">
-                  {t.next}
+                <button type="button" onClick={goNext} disabled={checking} className="btn-primary disabled:opacity-60">
+                  {checking ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      {t.processing}
+                    </span>
+                  ) : (
+                    t.next
+                  )}
                 </button>
               </div>
             )}

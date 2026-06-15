@@ -94,6 +94,7 @@ export const translations = {
     back: '← Atrás', next: 'Siguiente →',
     // Validation
     required: 'Este campo es requerido',
+    alreadyRegisteredError: 'Este correo ya está registrado para este evento.',
     acceptBoth: 'Debes aceptar ambos documentos',
     signRequired: 'Tu firma digital es requerida',
     skillRequired: 'Por favor selecciona tu nivel de esquí',
@@ -214,6 +215,7 @@ export const translations = {
     zellePendingMsg2: 'including your confirmation number in the note. We will confirm your registration once payment is received.',
     back: '← Back', next: 'Next →',
     required: 'This field is required',
+    alreadyRegisteredError: 'This email is already registered for this event.',
     acceptBoth: 'You must accept both documents',
     signRequired: 'Your digital signature is required',
     skillRequired: 'Please select your ski level',
