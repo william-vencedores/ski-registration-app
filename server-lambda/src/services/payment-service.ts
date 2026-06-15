@@ -32,7 +32,8 @@ export async function createPaymentIntent(
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,
     currency: 'usd',
-    receipt_email: email,
+    // No receipt_email: we send our own confirmation email, so this avoids
+    // Stripe also emailing its branded receipt in live mode.
     // Enable cards + wallets (Apple Pay / Google Pay / Link). allow_redirects: 'never'
     // keeps it to no-redirect methods so the embedded one-page flow needs no return_url.
     automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
@@ -81,7 +82,7 @@ export async function createBalancePaymentIntent(
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,
     currency: 'usd',
-    receipt_email: email,
+    // No receipt_email — we send our own confirmation email (see createPaymentIntent).
     metadata: {
       registrationId,
       balancePayment: 'true',
