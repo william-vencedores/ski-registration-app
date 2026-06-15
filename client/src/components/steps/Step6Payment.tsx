@@ -78,6 +78,10 @@ function CardCheckout({ paymentType, hasDeposit, chargeTotal }: CardCheckoutProp
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         clientSecret: data.clientSecret,
+        // Required by Stripe's client validation even though allow_redirects is
+        // 'never' server-side; with redirect: 'if_required' card/wallet payments
+        // never actually navigate here.
+        confirmParams: { return_url: window.location.href },
         redirect: 'if_required',
       })
 
