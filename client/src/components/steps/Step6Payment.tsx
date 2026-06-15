@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { loadStripe, type Appearance, type StripeElementsOptions } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { zelleConfig } from '../../lib/config'
@@ -9,55 +9,65 @@ import axios from 'axios'
 // Replace with your Stripe publishable key
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? 'pk_test_REPLACE_ME')
 
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      fontSize: '15px',
-      color: '#1e293b',
-      fontFamily: '"DM Sans", sans-serif',
-      '::placeholder': { color: '#94a3b8' },
+// Payment Element theme — tuned to match the registration form's palette.
+const appearance: Appearance = {
+  theme: 'stripe',
+  variables: {
+    colorPrimary: '#1e5b8a',
+    colorText: '#1e293b',
+    colorTextSecondary: '#64748b',
+    colorDanger: '#ef4444',
+    fontFamily: '"DM Sans", system-ui, sans-serif',
+    fontSizeBase: '15px',
+    borderRadius: '12px',
+    spacingUnit: '4px',
+  },
+  rules: {
+    '.Input': {
+      border: '1px solid rgba(0,0,0,0.1)',
+      boxShadow: 'none',
+      padding: '12px 14px',
     },
-    invalid: { color: '#ef4444' },
+    '.Input:focus': {
+      border: '1px solid #7ab8d9',
+      boxShadow: '0 0 0 3px rgba(122,184,217,0.25)',
+    },
+    '.Label': {
+      fontWeight: '600',
+      fontSize: '12px',
+    },
   },
 }
 
-function PaymentForm() {
+interface CardCheckoutProps {
+  paymentType: 'full' | 'deposit'
+  hasDeposit: boolean
+  chargeTotal: number
+}
+
+function CardCheckout({ paymentType, hasDeposit, chargeTotal }: CardCheckoutProps) {
   const stripe = useStripe()
   const elements = useElements()
   const { t } = useTranslation()
   const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId, setPaymentInfo } = useAppStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
-  const [method, setMethod] = useState<'card' | 'zelle'>('card')
 
-  const hasDeposit = selectedEvent && (selectedEvent.deposit ?? 0) > 0
-
-  // Base amounts
-  const fullPrice = selectedEvent?.price ?? 0
-  const depositPrice = selectedEvent?.deposit ?? 0
-  const baseAmount = paymentType === 'deposit' && hasDeposit ? depositPrice : fullPrice
-
-  // Processing fee on what they're paying now
-  const processing = Math.round((baseAmount * 0.029 + 0.30) * 100) / 100
-  const chargeTotal = baseAmount + processing
-
-  // Full total owed (for reference)
-  const fullProcessing = Math.round((fullPrice * 0.029 + 0.30) * 100) / 100
-  const fullTotal = fullPrice + fullProcessing
-
-  const remaining = paymentType === 'deposit' && hasDeposit ? fullTotal - chargeTotal : 0
-
-  // Zelle: participant can send any amount; default to the full event price.
-  const [zelleAmount, setZelleAmount] = useState<string>(fullPrice ? fullPrice.toFixed(2) : '')
-
-  const handleSubmit = async () => {
+  const handlePay = async () => {
     if (!stripe || !elements || !selectedEvent) return
     setLoading(true)
     setError('')
 
     try {
-      // Create payment intent on server
+      // Validate the Payment Element before creating the intent (deferred flow)
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        setError(submitError.message ?? 'Please check your payment details.')
+        setLoading(false)
+        return
+      }
+
+      // Create the PaymentIntent on the server
       const { data } = await axios.post('/api/payment/create-intent', {
         eventId: selectedEvent.id,
         email: formData.email,
@@ -65,30 +75,19 @@ function PaymentForm() {
         partialPayment: paymentType === 'deposit',
       })
 
-      const cardEl = elements.getElement(CardElement)
-      if (!cardEl) return
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret: data.clientSecret,
+        redirect: 'if_required',
+      })
 
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
-        data.clientSecret,
-        {
-          payment_method: {
-            card: cardEl,
-            billing_details: {
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-            },
-          },
-        }
-      )
-
-      if (stripeError) {
-        setError(stripeError.message ?? 'Payment failed')
+      if (confirmError) {
+        setError(confirmError.message ?? 'Payment failed')
         setLoading(false)
         return
       }
 
       if (paymentIntent?.status === 'succeeded') {
-        // Submit registration to server
         await axios.post('/api/registration/submit', {
           ...formData,
           eventId: selectedEvent.id,
@@ -108,6 +107,79 @@ function PaymentForm() {
       setError(msg)
       setLoading(false)
     }
+  }
+
+  return (
+    <>
+      <div>
+        <PaymentElement options={{ layout: 'tabs' }} />
+        <div className="flex items-center gap-1.5 mt-2 justify-end">
+          <span className="text-[11px] text-slate-400">{t.stripeNote}</span>
+          <span className="font-bold text-[11px] text-[#635bff]">Stripe</span>
+          <span className="text-slate-300">🔒</span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          ⚠️ {error}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={handlePay}
+        disabled={loading || !stripe}
+        className="btn-success w-full text-center justify-center py-4"
+      >
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            {t.processing}
+          </span>
+        ) : paymentType === 'deposit' && hasDeposit ? (
+          `Pay Deposit — $${chargeTotal.toFixed(2)}`
+        ) : (
+          t.payBtn
+        )}
+      </button>
+    </>
+  )
+}
+
+export default function Step6Payment() {
+  const { t } = useTranslation()
+  const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId, setPaymentInfo } = useAppStore()
+  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
+  const [method, setMethod] = useState<'card' | 'zelle'>('card')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const hasDeposit = !!selectedEvent && (selectedEvent.deposit ?? 0) > 0
+
+  // Base amounts
+  const fullPrice = selectedEvent?.price ?? 0
+  const depositPrice = selectedEvent?.deposit ?? 0
+  const baseAmount = paymentType === 'deposit' && hasDeposit ? depositPrice : fullPrice
+
+  // Processing fee on what they're paying now — must mirror the server calculation.
+  const processing = Math.round((baseAmount * 0.029 + 0.30) * 100) / 100
+  const chargeTotal = baseAmount + processing
+  const amountCents = Math.round(chargeTotal * 100)
+
+  // Full total owed (for reference)
+  const fullProcessing = Math.round((fullPrice * 0.029 + 0.30) * 100) / 100
+  const fullTotal = fullPrice + fullProcessing
+  const remaining = paymentType === 'deposit' && hasDeposit ? fullTotal - chargeTotal : 0
+
+  // Zelle: participant can send any amount; default to the full event price.
+  const [zelleAmount, setZelleAmount] = useState<string>(fullPrice ? fullPrice.toFixed(2) : '')
+
+  const elementsOptions: StripeElementsOptions = {
+    mode: 'payment',
+    amount: amountCents,
+    currency: 'usd',
+    appearance,
   }
 
   const handleZelleSubmit = async () => {
@@ -265,44 +337,15 @@ function PaymentForm() {
       </div>
 
       {method === 'card' ? (
-        <>
-          {/* Card Input */}
-          <div>
-            <label className="form-label">{t.cardLabel}</label>
-            <div className="form-input py-3.5">
-              <CardElement options={CARD_ELEMENT_OPTIONS} />
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 justify-end">
-              <span className="text-[11px] text-slate-400">{t.stripeNote}</span>
-              <span className="font-bold text-[11px] text-[#635bff]">Stripe</span>
-              <span className="text-slate-300">🔒</span>
-            </div>
+        amountCents >= 50 ? (
+          <Elements stripe={stripePromise} options={elementsOptions}>
+            <CardCheckout paymentType={paymentType} hasDeposit={hasDeposit} chargeTotal={chargeTotal} />
+          </Elements>
+        ) : (
+          <div className="bg-[#f0f5fa] border border-black/8 rounded-xl px-4 py-3 text-sm text-slate-500">
+            Payment is not available for this event.
           </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-              ⚠️ {error}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading || !stripe}
-            className="btn-success w-full text-center justify-center py-4"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                {t.processing}
-              </span>
-            ) : paymentType === 'deposit' && hasDeposit ? (
-              `Pay Deposit — $${chargeTotal.toFixed(2)}`
-            ) : (
-              t.payBtn
-            )}
-          </button>
-        </>
+        )
       ) : (
         <>
           {/* Zelle instructions */}
@@ -368,13 +411,5 @@ function PaymentForm() {
         </>
       )}
     </div>
-  )
-}
-
-export default function Step6Payment() {
-  return (
-    <Elements stripe={stripePromise}>
-      <PaymentForm />
-    </Elements>
   )
 }

@@ -33,6 +33,9 @@ export async function createPaymentIntent(
     amount: amountCents,
     currency: 'usd',
     receipt_email: email,
+    // Enable cards + wallets (Apple Pay / Google Pay / Link). allow_redirects: 'never'
+    // keeps it to no-redirect methods so the embedded one-page flow needs no return_url.
+    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
     metadata: {
       eventId,
       name,
