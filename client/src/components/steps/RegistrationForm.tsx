@@ -52,7 +52,7 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
   return errors
 }
 
-export default function RegistrationForm() {
+export default function RegistrationForm({ onClose }: { onClose?: () => void } = {}) {
   const { currentStep, setCurrentStep, formData, selectedEvent } = useAppStore()
   const { t } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -108,9 +108,20 @@ export default function RegistrationForm() {
     <div
       id="registration-form"
       ref={formRef}
-      className="px-4 pb-24 max-w-2xl mx-auto w-full"
+      className={onClose ? 'w-full' : 'px-4 pb-24 max-w-2xl mx-auto w-full'}
     >
-      <div className="card">
+      <div className="card relative">
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center
+                       text-slate-400 hover:text-slate-700 hover:bg-black/5 transition-colors"
+          >
+            ✕
+          </button>
+        )}
         {isPrompt ? (
           <ReturningUserPrompt />
         ) : isSuccess ? (

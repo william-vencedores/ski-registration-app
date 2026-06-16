@@ -39,10 +39,7 @@ export default function EventSelector() {
     setSelectedEvent(ev)
     setOpen(false)
     setCurrentStep(0)
-    // Scroll to form
-    setTimeout(() => {
-      document.getElementById('registration-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 100)
+    // The form opens as a centered modal (see App.tsx) — no page scroll needed.
   }
 
   const name = selectedEvent ? selectedEvent.name : t.evChoose

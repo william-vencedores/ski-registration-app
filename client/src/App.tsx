@@ -13,9 +13,29 @@ import AdminDisclosures from './pages/AdminDisclosures'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import { useAppStore } from './lib/store'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect } from 'react'
 
 function PublicSite() {
-  const { selectedEvent } = useAppStore()
+  const { selectedEvent, setSelectedEvent, resetForm } = useAppStore()
+
+  const handleClose = () => {
+    setSelectedEvent(null)
+    resetForm()
+  }
+
+  // While the registration modal is open: lock background scroll and allow ESC to close.
+  useEffect(() => {
+    if (!selectedEvent) return
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEvent])
+
   return (
     <div className="relative min-h-screen">
       <Background />
@@ -25,20 +45,36 @@ function PublicSite() {
           <Hero />
           <Gallery />
           <EventSelector />
-          <AnimatePresence>
-            {selectedEvent && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 30 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-              >
-                <RegistrationForm />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </main>
       </div>
+
+      {/* Registration opens as a centered modal so it can't be missed */}
+      <AnimatePresence>
+        {selectedEvent && (
+          <motion.div
+            key="reg-modal"
+            className="fixed inset-0 z-[60] flex justify-center overflow-y-auto p-4 sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={handleClose}
+            />
+            <motion.div
+              className="relative z-10 w-full max-w-2xl my-auto"
+              initial={{ opacity: 0, scale: 0.96, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 24 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <RegistrationForm onClose={handleClose} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
