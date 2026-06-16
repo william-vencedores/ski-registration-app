@@ -15,6 +15,7 @@ const templatesDir = join(__dirname, '..', 'templates');
 let confirmationTemplate: Handlebars.TemplateDelegate | null = null;
 let verificationTemplate: Handlebars.TemplateDelegate | null = null;
 let zellePendingTemplate: Handlebars.TemplateDelegate | null = null;
+let adminNotificationTemplate: Handlebars.TemplateDelegate | null = null;
 
 function getConfirmationTemplate(): Handlebars.TemplateDelegate {
   if (!confirmationTemplate) {
@@ -38,6 +39,14 @@ function getZellePendingTemplate(): Handlebars.TemplateDelegate {
     zellePendingTemplate = Handlebars.compile(html);
   }
   return zellePendingTemplate;
+}
+
+function getAdminNotificationTemplate(): Handlebars.TemplateDelegate {
+  if (!adminNotificationTemplate) {
+    const html = readFileSync(join(templatesDir, 'admin-notification-email.html'), 'utf-8');
+    adminNotificationTemplate = Handlebars.compile(html);
+  }
+  return adminNotificationTemplate;
 }
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
@@ -140,4 +149,62 @@ export async function sendZellePendingEmail(
   });
 
   await sendEmail(to, `⏳ Registro Recibido (Pago Zelle Pendiente) — ${eventName} #${confirmationId}`, html);
+}
+
+export interface AdminNotificationData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  eventName: string;
+  confirmationId: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  totalPaid: number;
+  totalOwed: number;
+  zelleAmount?: number;
+}
+
+export async function sendAdminNotificationEmail(reg: AdminNotificationData): Promise<void> {
+  if (!config.email.from) {
+    console.info('[Email] Email sender not configured — skipping admin notification email');
+    return;
+  }
+  if (!config.email.adminNotify) return;
+
+  const isZelle = reg.paymentMethod === 'zelle';
+  const now = new Date();
+  const date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+  const location = [reg.city, reg.state].filter(Boolean).join(', ');
+
+  const rows: Array<{ label: string; value: string }> = [
+    { label: 'Confirmación', value: `#${reg.confirmationId}` },
+    { label: 'Correo', value: reg.email },
+  ];
+  if (reg.phone) rows.push({ label: 'Teléfono', value: reg.phone });
+  if (location) rows.push({ label: 'Ciudad', value: location });
+  rows.push({ label: 'Método', value: isZelle ? 'Zelle' : 'Tarjeta' });
+  rows.push({ label: 'Estado', value: reg.paymentStatus });
+  if (isZelle) {
+    rows.push({ label: 'Monto Zelle (declarado)', value: `$${(reg.zelleAmount ?? 0).toFixed(2)} USD` });
+  }
+  rows.push({ label: 'Pagado', value: `$${reg.totalPaid.toFixed(2)} USD` });
+  rows.push({ label: 'Total', value: `$${reg.totalOwed.toFixed(2)} USD` });
+  rows.push({ label: 'Fecha', value: date });
+
+  const html = getAdminNotificationTemplate()({
+    name: `${reg.firstName} ${reg.lastName}`,
+    eventName: reg.eventName,
+    rows,
+    isZellePending: isZelle && reg.paymentStatus === 'pending',
+    adminUrl: `${config.clientUrl}/admin`,
+  });
+
+  await sendEmail(
+    config.email.adminNotify,
+    `🎿 Nueva inscripción — ${reg.firstName} ${reg.lastName} · ${reg.eventName}`,
+    html
+  );
 }

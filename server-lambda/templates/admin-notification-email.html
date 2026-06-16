@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nueva Inscripción</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #0a1628;
+      font-family: 'DM Sans', Arial, sans-serif;
+    "
+  >
+    <div style="max-width: 560px; margin: 0 auto; padding: 40px 20px">
+      <div
+        style="
+          background: linear-gradient(135deg, #1e5b8a, #0d2340);
+          border-radius: 16px;
+          padding: 28px;
+          text-align: center;
+          margin-bottom: 20px;
+        "
+      >
+        <h1
+          style="
+            color: #e8b84b;
+            font-family: Georgia, serif;
+            font-size: 24px;
+            margin: 0 0 8px;
+            letter-spacing: 4px;
+          "
+        >
+          VENCEDORES
+        </h1>
+        <p style="color: #7ab8d9; margin: 0; font-size: 13px; letter-spacing: 2px">
+          NUEVA INSCRIPCIÓN
+        </p>
+      </div>
+      <div
+        style="
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          margin-bottom: 20px;
+        "
+      >
+        <h2 style="color: #1e293b; margin: 0 0 4px; font-size: 20px">
+          {{name}}
+        </h2>
+        <p style="color: #64748b; margin: 0 0 24px; font-size: 14px">
+          se ha inscrito en <strong>{{eventName}}</strong>
+        </p>
+        <div
+          style="background: #f8fbfe; border-radius: 12px; padding: 20px; margin-bottom: 16px"
+        >
+          {{#each rows}}
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              border-bottom: 1px solid #e2e8f0;
+            "
+          >
+            <span
+              style="
+                color: #64748b;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+              "
+              >{{this.label}}</span
+            >
+            <span style="color: #1e293b; font-weight: 600; font-size: 13px; text-align: right"
+              >{{this.value}}</span
+            >
+          </div>
+          {{/each}}
+        </div>
+        {{#if isZellePending}}
+        <div
+          style="
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            color: #92400e;
+            font-size: 13px;
+          "
+        >
+          ⏳ Pago por Zelle pendiente de verificación. Confirma el monto recibido en
+          el panel de administración.
+        </div>
+        {{/if}}
+        <a
+          href="{{adminUrl}}"
+          style="
+            display: inline-block;
+            background: #1e5b8a;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 10px;
+          "
+          >Ver en el panel</a
+        >
+      </div>
+      <p style="text-align: center; color: #334155; font-size: 11px; margin: 0">
+        Vencedores Ski Group · Notificación automática
+      </p>
+    </div>
+  </body>
+</html>

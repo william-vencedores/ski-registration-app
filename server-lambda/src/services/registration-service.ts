@@ -134,6 +134,24 @@ export async function submitRegistration(
     );
   }
 
+  // Notify the admin inbox of every new registration (failures are swallowed
+  // inside sendEmail, so this never blocks a successful registration).
+  await emailService.sendAdminNotificationEmail({
+    firstName: req.firstName,
+    lastName: req.lastName,
+    email: req.email,
+    phone: req.phone,
+    city: req.city,
+    state: req.state,
+    eventName: event.name as string,
+    confirmationId,
+    paymentMethod: isZelle ? 'zelle' : 'stripe',
+    paymentStatus,
+    totalPaid,
+    totalOwed,
+    zelleAmount: req.zelleAmount,
+  });
+
   return {
     success: true,
     confirmationId,

@@ -26,6 +26,8 @@ export const config = {
     from: env('EMAIL_FROM') || env('SMTP_USER'),
     region: env('AWS_REGION', 'us-east-2'),
     resendApiKey: env('RESEND_API_KEY'),
+    // Where new-registration notifications go (admin inbox).
+    adminNotify: env('ADMIN_NOTIFY_EMAIL', 'admin@vencedores.net'),
   },
   zelle: {
     email: env('ZELLE_EMAIL', 'info@vencedores.net'),
