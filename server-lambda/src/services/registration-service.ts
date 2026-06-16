@@ -242,6 +242,52 @@ export async function payBalance(
   };
 }
 
+/**
+ * Record the amount actually received via Zelle for a registration. An admin
+ * reconciles this manually against their bank. The received amount is stored as
+ * totalPaid (so it flows into revenue stats) and the payment status is recomputed.
+ */
+export async function setZelleReceived(
+  regId: string,
+  amountReceived: number
+): Promise<Record<string, unknown>> {
+  if (Number.isNaN(amountReceived) || amountReceived < 0) {
+    throw new BadRequestError('Invalid amount received');
+  }
+
+  const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${regId}`, 'GSI1SK', null);
+  if (items.length === 0) {
+    throw new NotFoundError(`Registration not found: ${regId}`);
+  }
+
+  const item = items[0];
+  const pk = item.PK as string;
+  const sk = item.SK as string;
+  const totalOwed = (item.totalOwed as number) || 0;
+
+  const newStatus =
+    amountReceived >= totalOwed && totalOwed > 0
+      ? 'paid'
+      : amountReceived > 0
+        ? 'partial'
+        : 'pending';
+
+  await repo.updateItem(
+    pk,
+    sk,
+    'SET totalPaid = :paid, paymentStatus = :status',
+    { ':paid': amountReceived, ':status': newStatus },
+    null
+  );
+
+  return {
+    id: regId,
+    totalPaid: amountReceived,
+    totalOwed,
+    paymentStatus: newStatus,
+  };
+}
+
 export async function markAsPaid(regId: string): Promise<Record<string, unknown>> {
   const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${regId}`, 'GSI1SK', null);
   if (items.length === 0) {

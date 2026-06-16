@@ -35,7 +35,7 @@ export async function verifyCode(email: string, code: string): Promise<VerifyRes
 
 export async function createBalancePaymentIntent(registrationId: string, email: string, name: string) {
   const res = await axios.post('/api/payment/create-balance-intent', { registrationId, email, name })
-  return res.data as { clientSecret: string; chargeAmount: number; remaining: number; processing: number }
+  return res.data as { clientSecret: string; chargeAmount: number; remaining: number }
 }
 
 export async function payBalance(registrationId: string, amountPaid: number) {

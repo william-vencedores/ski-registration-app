@@ -166,18 +166,17 @@ export default function Step6Payment() {
   const depositPrice = selectedEvent?.deposit ?? 0
   const baseAmount = paymentType === 'deposit' && hasDeposit ? depositPrice : fullPrice
 
-  // Processing fee on what they're paying now — must mirror the server calculation.
-  const processing = Math.round((baseAmount * 0.029 + 0.30) * 100) / 100
-  const chargeTotal = baseAmount + processing
+  // The event price already covers processing, so no fee is added — card and
+  // Zelle cost the same. Must mirror the server calculation.
+  const chargeTotal = baseAmount
   const amountCents = Math.round(chargeTotal * 100)
 
-  // Full total owed (for reference)
-  const fullProcessing = Math.round((fullPrice * 0.029 + 0.30) * 100) / 100
-  const fullTotal = fullPrice + fullProcessing
-  const remaining = paymentType === 'deposit' && hasDeposit ? fullTotal - chargeTotal : 0
+  // Remaining balance when paying only the deposit.
+  const remaining = paymentType === 'deposit' && hasDeposit ? fullPrice - chargeTotal : 0
 
-  // Zelle: participant can send any amount; default to the full event price.
-  const [zelleAmount, setZelleAmount] = useState<string>(fullPrice ? fullPrice.toFixed(2) : '')
+  // Zelle: participant chooses the deposit or the full amount (same toggle as card).
+  // No processing fee is added, so the amount is simply the base price.
+  const zelleAmt = baseAmount
 
   const elementsOptions: StripeElementsOptions = {
     mode: 'payment',
@@ -188,7 +187,7 @@ export default function Step6Payment() {
 
   const handleZelleSubmit = async () => {
     if (!selectedEvent) return
-    const amt = Math.round(parseFloat(zelleAmount) * 100) / 100
+    const amt = Math.round(zelleAmt * 100) / 100
     if (!amt || amt <= 0 || Number.isNaN(amt)) {
       setError(t.zelleAmountRequired)
       return
@@ -260,82 +259,78 @@ export default function Step6Payment() {
           </div>
         </div>
 
-        {method === 'card' ? (
-          <>
-            {/* Payment type selector */}
-            {hasDeposit && (
-              <div className="bg-[#f0f5fa] px-5 py-3 flex gap-2 border-b border-black/8">
-                <button
-                  type="button"
-                  onClick={() => setPaymentType('full')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
-                    ${paymentType === 'full'
-                      ? 'bg-white text-slate-900 border-glacier shadow-sm'
-                      : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
-                >
-                  Pay Full Amount
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentType('deposit')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
-                    ${paymentType === 'deposit'
-                      ? 'bg-white text-slate-900 border-glacier shadow-sm'
-                      : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
-                >
-                  Pay Deposit
-                </button>
-              </div>
-            )}
+        {/* Payment type selector — shared by card & Zelle when the event has a deposit */}
+        {hasDeposit && (
+          <div className="bg-[#f0f5fa] px-5 py-3 flex gap-2 border-b border-black/8">
+            <button
+              type="button"
+              onClick={() => setPaymentType('full')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
+                ${paymentType === 'full'
+                  ? 'bg-white text-slate-900 border-glacier shadow-sm'
+                  : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
+            >
+              {t.payFull}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentType('deposit')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
+                ${paymentType === 'deposit'
+                  ? 'bg-white text-slate-900 border-glacier shadow-sm'
+                  : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
+            >
+              {t.payDeposit}
+            </button>
+          </div>
+        )}
 
-            <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
-              {paymentType === 'deposit' && hasDeposit ? (
-                <>
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>Deposit</span>
-                    <span>${depositPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>{t.feeProcessing}</span>
-                    <span>${processing.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
-                    <span className="text-xs tracking-widest uppercase">Due Now</span>
-                    <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-amber-600 pt-1">
-                    <span>Remaining balance</span>
-                    <span>${remaining.toFixed(2)} USD</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>{t.feeSkier}</span>
-                    <span>${fullPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>{t.feeProcessing}</span>
-                    <span>${processing.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
-                    <span className="text-xs tracking-widest uppercase">{t.feeTotal}</span>
-                    <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </>
+        {method === 'card' ? (
+          <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
+            {paymentType === 'deposit' && hasDeposit ? (
+              <>
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>{t.deposit}</span>
+                  <span>${depositPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
+                  <span className="text-xs tracking-widest uppercase">{t.dueNow}</span>
+                  <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
+                </div>
+                <div className="flex justify-between text-xs text-amber-600 pt-1">
+                  <span>{t.remainingBalance}</span>
+                  <span>${remaining.toFixed(2)} USD</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>{t.feeSkier}</span>
+                  <span>${fullPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
+                  <span className="text-xs tracking-widest uppercase">{t.feeTotal}</span>
+                  <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
+                </div>
+              </>
+            )}
+          </div>
         ) : (
           <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
             <div className="flex justify-between text-sm text-slate-600">
-              <span>{t.feeSkier}</span>
-              <span>${fullPrice.toFixed(2)}</span>
+              <span>{paymentType === 'deposit' && hasDeposit ? t.deposit : t.feeSkier}</span>
+              <span>${zelleAmt.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-xs text-pine pt-1">
-              <span>{t.zelleNoFee}</span>
-              <span>$0.00</span>
+            <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
+              <span className="text-xs tracking-widest uppercase">{paymentType === 'deposit' && hasDeposit ? t.sendNow : t.feeTotal}</span>
+              <span className="font-cinzel text-lg text-deep-sky">${zelleAmt.toFixed(2)} USD</span>
             </div>
+            {paymentType === 'deposit' && hasDeposit && (
+              <div className="flex justify-between text-xs text-amber-600 pt-1">
+                <span>{t.remainingBalance}</span>
+                <span>${(fullPrice - zelleAmt).toFixed(2)} USD</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -367,24 +362,6 @@ export default function Step6Payment() {
               </div>
             </div>
             <p className="text-[11px] text-amber-700">{t.zelleMemoNote}</p>
-          </div>
-
-          {/* Amount input */}
-          <div>
-            <label className="form-label">{t.zelleAmountLabel}</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={zelleAmount}
-                onChange={(e) => setZelleAmount(e.target.value)}
-                className="form-input pl-8"
-                placeholder={fullPrice.toFixed(2)}
-              />
-            </div>
           </div>
 
           <div className="bg-[#f0f5fa] border border-black/8 rounded-xl px-4 py-3 text-xs text-slate-600 leading-relaxed">

@@ -37,8 +37,7 @@ function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
   const [error, setError] = useState('')
 
   const remaining = registration.totalOwed - registration.totalPaid
-  const processing = Math.round((remaining * 0.029 + 0.30) * 100) / 100
-  const chargeTotal = remaining + processing
+  const chargeTotal = remaining
 
   const handlePay = async () => {
     if (!stripe || !elements) return
@@ -99,10 +98,6 @@ function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
           <div className="flex justify-between text-sm text-slate-600">
             <span>{t.balanceRemaining}</span>
             <span>${remaining.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-slate-600">
-            <span>{t.balanceProcessing}</span>
-            <span>${processing.toFixed(2)}</span>
           </div>
           <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
             <span className="text-xs tracking-widest uppercase">{t.balanceTotal}</span>

@@ -43,6 +43,17 @@ export async function handleMarkAsPaid(event: APIGatewayProxyEventV2, id: string
   }
 }
 
+export async function handleSetZelleReceived(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
+  try {
+    requireAuth(event);
+    const body = JSON.parse(event.body || '{}');
+    const amount = Number(body.amount);
+    return jsonResponse(200, await registrationService.setZelleReceived(id, amount));
+  } catch (e) {
+    return handleError(e);
+  }
+}
+
 export async function handleResendEmail(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
   try {
     requireAuth(event);

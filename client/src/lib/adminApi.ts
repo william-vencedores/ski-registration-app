@@ -109,6 +109,11 @@ export async function markAsPaid(id: string) {
   return res.data
 }
 
+export async function setZelleReceived(id: string, amount: number) {
+  const res = await axios.patch(`/api/admin/registrations/${id}/zelle-received`, { amount })
+  return res.data
+}
+
 // ── Events (Admin) ─────────────────────────────────────────
 
 export function useAdminEvents() {

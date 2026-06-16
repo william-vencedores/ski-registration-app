@@ -27,14 +27,11 @@ export async function createPaymentIntent(
   // Determine the base amount (deposit or full price)
   const baseAmount = partialPayment && deposit > 0 ? deposit : price;
 
-  // Stripe fee: 2.9% + $0.30
-  const processing = Math.round((baseAmount * 0.029 + 0.3) * 100) / 100;
-  const chargeAmount = baseAmount + processing;
+  // The event price already covers card processing costs, so we charge the base
+  // amount with no added fee — card and Zelle cost the participant the same.
+  const chargeAmount = baseAmount;
   const amountCents = Math.round(chargeAmount * 100);
-
-  // Calculate full total owed (price + full processing)
-  const fullProcessing = Math.round((price * 0.029 + 0.3) * 100) / 100;
-  const totalOwed = price + fullProcessing;
+  const totalOwed = price;
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,
@@ -79,9 +76,8 @@ export async function createBalancePaymentIntent(
     throw new BadRequestError('No balance remaining');
   }
 
-  // Processing fee on the remaining amount
-  const processing = Math.round((remaining * 0.029 + 0.3) * 100) / 100;
-  const chargeAmount = remaining + processing;
+  // No added processing fee — the event price already accounts for it.
+  const chargeAmount = remaining;
   const amountCents = Math.round(chargeAmount * 100);
 
   const eventName = (reg.eventName as string) || 'Event';
@@ -102,6 +98,5 @@ export async function createBalancePaymentIntent(
     clientSecret: paymentIntent.client_secret,
     chargeAmount,
     remaining,
-    processing,
   };
 }
