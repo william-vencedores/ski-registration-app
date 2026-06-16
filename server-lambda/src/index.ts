@@ -20,7 +20,7 @@ import { handleWebhook } from './handlers/webhook.js';
 import {
   handleListRegistrations, handleGetRegistration,
   handleToggleAttendance, handleResendEmail, handleStats, handleMarkAsPaid,
-  handleSetZelleReceived,
+  handleSetAmountPaid,
 } from './handlers/admin.js';
 // Disclosure handlers
 import {
@@ -147,9 +147,9 @@ async function route(
     }
   }
   {
-    const match = path.match(/^\/api\/admin\/registrations\/([^/]+)\/zelle-received$/);
+    const match = path.match(/^\/api\/admin\/registrations\/([^/]+)\/amount-paid$/);
     if (method === 'PATCH' && match) {
-      return handleSetZelleReceived(event, match[1]);
+      return handleSetAmountPaid(event, match[1]);
     }
   }
   {

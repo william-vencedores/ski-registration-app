@@ -261,11 +261,12 @@ export async function payBalance(
 }
 
 /**
- * Record the amount actually received via Zelle for a registration. An admin
- * reconciles this manually against their bank. The received amount is stored as
- * totalPaid (so it flows into revenue stats) and the payment status is recomputed.
+ * Set the total amount paid for a registration. An admin reconciles this
+ * manually — e.g. a Zelle transfer, or the balance on a card deposit paid by
+ * other means. The amount is stored as totalPaid (so it flows into revenue
+ * stats) and the payment status is recomputed.
  */
-export async function setZelleReceived(
+export async function setAmountPaid(
   regId: string,
   amountReceived: number
 ): Promise<Record<string, unknown>> {

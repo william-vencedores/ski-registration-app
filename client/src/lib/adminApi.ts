@@ -109,8 +109,8 @@ export async function markAsPaid(id: string) {
   return res.data
 }
 
-export async function setZelleReceived(id: string, amount: number) {
-  const res = await axios.patch(`/api/admin/registrations/${id}/zelle-received`, { amount })
+export async function setAmountPaid(id: string, amount: number) {
+  const res = await axios.patch(`/api/admin/registrations/${id}/amount-paid`, { amount })
   return res.data
 }
 

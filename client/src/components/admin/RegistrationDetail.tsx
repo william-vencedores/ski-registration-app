@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Registration } from '../../lib/adminApi'
-import { toggleAttendance, resendEmail, markAsPaid, setZelleReceived } from '../../lib/adminApi'
+import { toggleAttendance, resendEmail, markAsPaid, setAmountPaid } from '../../lib/adminApi'
 
 const SKILL_LABELS: Record<string, string> = {
   beginner: '🎿 Beginner', intermediate: '⛷️ Intermediate',
@@ -20,30 +20,30 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sent' | 'error'>('idle')
   const [loadingPaid, setLoadingPaid] = useState(false)
-  const [zelleInput, setZelleInput] = useState('')
-  const [loadingZelle, setLoadingZelle] = useState(false)
-  const [zelleSaved, setZelleSaved] = useState(false)
+  const [paidInput, setPaidInput] = useState('')
+  const [savingPaid, setSavingPaid] = useState(false)
+  const [paidSaved, setPaidSaved] = useState(false)
 
-  // Sync the Zelle-received input whenever a different registration is opened.
+  // Sync the amount-paid input whenever a different registration is opened.
   useEffect(() => {
-    setZelleInput(reg ? String(reg.totalPaid ?? 0) : '')
-    setZelleSaved(false)
+    setPaidInput(reg ? String(reg.totalPaid ?? 0) : '')
+    setPaidSaved(false)
   }, [reg?.id])
 
-  const handleZelleReceived = async () => {
+  const handleSaveAmountPaid = async () => {
     if (!reg) return
-    const amt = Math.round(parseFloat(zelleInput) * 100) / 100
+    const amt = Math.round(parseFloat(paidInput) * 100) / 100
     if (Number.isNaN(amt) || amt < 0) return
-    setLoadingZelle(true)
-    setZelleSaved(false)
+    setSavingPaid(true)
+    setPaidSaved(false)
     try {
-      await setZelleReceived(reg.id, amt)
-      setZelleSaved(true)
+      await setAmountPaid(reg.id, amt)
+      setPaidSaved(true)
       onUpdate()
     } catch (e) {
       console.error(e)
     } finally {
-      setLoadingZelle(false)
+      setSavingPaid(false)
     }
   }
 
@@ -182,10 +182,9 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                   </>
                 )}
 
-                {reg.paymentMethod === 'zelle' && (
-                  <div className="mt-3 bg-white/5 border border-white/10 rounded-lg px-3 py-3">
+                <div className="mt-3 bg-white/5 border border-white/10 rounded-lg px-3 py-3">
                     <label className="text-[10px] tracking-wider uppercase text-slate-400 font-semibold">
-                      Zelle Received
+                      {reg.paymentMethod === 'zelle' ? 'Zelle Received' : 'Amount Paid'}
                     </label>
                     <div className="flex gap-2 mt-2">
                       <div className="relative flex-1">
@@ -195,29 +194,28 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                           min="0"
                           step="0.01"
                           inputMode="decimal"
-                          value={zelleInput}
-                          onChange={(e) => { setZelleInput(e.target.value); setZelleSaved(false) }}
+                          value={paidInput}
+                          onChange={(e) => { setPaidInput(e.target.value); setPaidSaved(false) }}
                           className="w-full bg-[#0d1f38] border border-white/15 rounded-lg pl-7 pr-3 py-2
                                      text-sm text-white focus:outline-none focus:border-glacier"
                         />
                       </div>
                       <button
-                        onClick={handleZelleReceived}
-                        disabled={loadingZelle}
+                        onClick={handleSaveAmountPaid}
+                        disabled={savingPaid}
                         className="px-4 rounded-lg text-sm font-semibold bg-glacier/20 text-glacier
                                    border border-glacier/40 hover:bg-glacier/30 transition-all
                                    disabled:opacity-50 flex items-center justify-center"
                       >
-                        {loadingZelle
+                        {savingPaid
                           ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                          : zelleSaved ? '✓ Saved' : 'Save'}
+                          : paidSaved ? '✓ Saved' : 'Save'}
                       </button>
                     </div>
                     <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">
-                      Total received via Zelle so far. Saving updates the payment status automatically.
+                      Total amount received for this registration. Saving updates the payment status automatically.
                     </p>
                   </div>
-                )}
 
                 <Row label="Signature" value={reg.signature} />
               </Section>
