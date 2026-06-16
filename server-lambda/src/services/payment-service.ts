@@ -86,6 +86,9 @@ export async function createBalancePaymentIntent(
     amount: amountCents,
     currency: 'usd',
     // No receipt_email — we send our own confirmation email (see createPaymentIntent).
+    // Enable cards + wallets (Apple Pay / Google Pay / Link); allow_redirects: 'never'
+    // keeps the balance payment on one page with no return_url navigation.
+    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
     metadata: {
       registrationId,
       balancePayment: 'true',

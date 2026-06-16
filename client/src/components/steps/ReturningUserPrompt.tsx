@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { loadStripe, type Appearance, type StripeElementsOptions } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { sendVerificationCode, verifyCode, createBalancePaymentIntent, payBalance } from '../../lib/returningApi'
@@ -8,15 +8,23 @@ import type { RegistrationInfo } from '../../lib/returningApi'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? 'pk_test_REPLACE_ME')
 
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      fontSize: '15px',
-      color: '#1e293b',
-      fontFamily: '"DM Sans", sans-serif',
-      '::placeholder': { color: '#94a3b8' },
-    },
-    invalid: { color: '#ef4444' },
+// Payment Element theme — mirrors the registration form's palette.
+const appearance: Appearance = {
+  theme: 'stripe',
+  variables: {
+    colorPrimary: '#1e5b8a',
+    colorText: '#1e293b',
+    colorTextSecondary: '#64748b',
+    colorDanger: '#ef4444',
+    fontFamily: '"DM Sans", system-ui, sans-serif',
+    fontSizeBase: '15px',
+    borderRadius: '12px',
+    spacingUnit: '4px',
+  },
+  rules: {
+    '.Input': { border: '1px solid rgba(0,0,0,0.1)', boxShadow: 'none', padding: '12px 14px' },
+    '.Input:focus': { border: '1px solid #7ab8d9', boxShadow: '0 0 0 3px rgba(122,184,217,0.25)' },
+    '.Label': { fontWeight: '600', fontSize: '12px' },
   },
 }
 
@@ -45,23 +53,28 @@ function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
     setError('')
 
     try {
+      // Validate the Payment Element before creating the intent (deferred flow)
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        setError(submitError.message ?? 'Please check your payment details.')
+        setLoading(false)
+        return
+      }
+
       const intentData = await createBalancePaymentIntent(registration.confirmationId, email, name)
 
-      const cardEl = elements.getElement(CardElement)
-      if (!cardEl) return
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret: intentData.clientSecret,
+        // Required by Stripe's client validation even though allow_redirects is
+        // 'never' server-side; redirect: 'if_required' keeps card/wallet payments
+        // on this page.
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required',
+      })
 
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
-        intentData.clientSecret,
-        {
-          payment_method: {
-            card: cardEl,
-            billing_details: { name, email },
-          },
-        }
-      )
-
-      if (stripeError) {
-        setError(stripeError.message ?? 'Payment failed')
+      if (confirmError) {
+        setError(confirmError.message ?? 'Payment failed')
         setLoading(false)
         return
       }
@@ -107,12 +120,9 @@ function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
       </div>
 
       <div className="text-left">
-        <label className="form-label">Card Information</label>
-        <div className="form-input py-3.5">
-          <CardElement options={CARD_ELEMENT_OPTIONS} />
-        </div>
+        <PaymentElement options={{ layout: 'tabs' }} />
         <div className="flex items-center gap-1.5 mt-2 justify-end">
-          <span className="text-[11px] text-slate-400">Secure SSL payment · Powered by</span>
+          <span className="text-[11px] text-slate-400">{t.stripeNote}</span>
           <span className="font-bold text-[11px] text-[#635bff]">Stripe</span>
           <span className="text-slate-300">🔒</span>
         </div>
@@ -248,8 +258,15 @@ export default function ReturningUserPrompt() {
 
   // Show balance payment form
   if (alreadyRegistered && pendingRegistration) {
+    const remaining = pendingRegistration.totalOwed - pendingRegistration.totalPaid
+    const elementsOptions: StripeElementsOptions = {
+      mode: 'payment',
+      amount: Math.round(remaining * 100),
+      currency: 'usd',
+      appearance,
+    }
     return (
-      <Elements stripe={stripePromise}>
+      <Elements stripe={stripePromise} options={elementsOptions}>
         <BalancePaymentForm
           registration={pendingRegistration}
           email={email}
