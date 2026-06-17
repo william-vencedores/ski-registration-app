@@ -121,8 +121,6 @@ async function getLatestProfile(email: string) {
     email: latest.email ?? '',
     phone: latest.phone ?? '',
     dob: latest.dob ?? '',
-    city: latest.city ?? '',
-    state: latest.state ?? '',
     emergencyName: latest.emergencyName ?? '',
     emergencyPhone: latest.emergencyPhone ?? '',
     emergencyRelation: latest.emergencyRelation ?? '',

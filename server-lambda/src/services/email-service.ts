@@ -156,8 +156,6 @@ export interface AdminNotificationData {
   lastName: string;
   email: string;
   phone?: string;
-  city?: string;
-  state?: string;
   eventName: string;
   confirmationId: string;
   paymentMethod: string;
@@ -177,14 +175,12 @@ export async function sendAdminNotificationEmail(reg: AdminNotificationData): Pr
   const isZelle = reg.paymentMethod === 'zelle';
   const now = new Date();
   const date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
-  const location = [reg.city, reg.state].filter(Boolean).join(', ');
 
   const rows: Array<{ label: string; value: string }> = [
     { label: 'Confirmación', value: `#${reg.confirmationId}` },
     { label: 'Correo', value: reg.email },
   ];
   if (reg.phone) rows.push({ label: 'Teléfono', value: reg.phone });
-  if (location) rows.push({ label: 'Ciudad', value: location });
   rows.push({ label: 'Método', value: isZelle ? 'Zelle' : 'Tarjeta' });
   rows.push({ label: 'Estado', value: reg.paymentStatus });
   if (isZelle) {

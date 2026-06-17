@@ -12,8 +12,6 @@ export interface Registration {
   email: string
   phone: string
   dob: string
-  city: string
-  state: string
   emergencyName: string
   emergencyPhone: string
   emergencyRelation: string

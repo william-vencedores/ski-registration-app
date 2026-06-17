@@ -34,8 +34,6 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
     if (!formData.email.trim()) errors.email = t.required
     if (!formData.phone.trim()) errors.phone = t.required
     if (!formData.dob) errors.dob = t.required
-    if (!formData.city.trim()) errors.city = t.required
-    if (!formData.state.trim()) errors.state = t.required
   }
   if (formStep === 1) {
     if (!formData.emergencyName.trim()) errors.emergencyName = t.required

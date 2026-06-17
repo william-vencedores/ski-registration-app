@@ -32,10 +32,6 @@ export default function Step1Personal({ errors }: Props) {
         {field('email', t.email, 'email', 'you@example.com')}
         {field('phone', t.phone, 'tel', '+1 (555) 000-0000')}
         {field('dob', t.dob, 'date')}
-        {field('city', t.city)}
-        <div className="sm:col-span-2">
-          {field('state', t.state)}
-        </div>
       </div>
     </div>
   )

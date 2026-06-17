@@ -7,8 +7,8 @@ import RegistrationDetail from '../components/admin/RegistrationDetail'
 import logo from '../assets/logo.jpeg'
 
 const SKILL_ICONS: Record<string, string> = {
-  beginner: '🎿', intermediate: '⛷️', advanced: '🏔️',
-  expert: '🌪️', freeride: '❄️', snowboard: '🏂',
+  beginner: '🎿', intermediate: '⛷️', instructor: '🏅',
+  advanced: '🏔️', expert: '🌪️', freeride: '❄️', snowboard: '🏂',
 }
 
 export default function AdminDashboard() {

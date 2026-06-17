@@ -40,8 +40,6 @@ export interface FormData {
   email: string
   phone: string
   dob: string
-  city: string
-  state: string
   // Step 2
   emergencyName: string
   emergencyPhone: string
@@ -63,7 +61,7 @@ export interface FormData {
 }
 
 export const initialFormData: FormData = {
-  firstName: '', lastName: '', email: '', phone: '', dob: '', city: '', state: '',
+  firstName: '', lastName: '', email: '', phone: '', dob: '',
   emergencyName: '', emergencyPhone: '', emergencyRelation: '',
   skillLevel: '', dietary: '',
   medConditions: 'no', conditionDetails: '',

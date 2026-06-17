@@ -5,6 +5,7 @@ import { toggleAttendance, resendEmail, markAsPaid, setAmountPaid } from '../../
 
 const SKILL_LABELS: Record<string, string> = {
   beginner: '🎿 Beginner', intermediate: '⛷️ Intermediate',
+  instructor: '🏅 Instructor',
   advanced: '🏔️ Advanced', expert: '🌪️ Expert',
   freeride: '❄️ Freeride', snowboard: '🏂 Snowboard',
 }
@@ -225,7 +226,6 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 <Row label="Email" value={reg.email} />
                 <Row label="Phone" value={reg.phone} />
                 <Row label="DOB" value={reg.dob} />
-                <Row label="City" value={`${reg.city}, ${reg.state}`} />
               </Section>
 
               <Section title="Emergency Contact">
