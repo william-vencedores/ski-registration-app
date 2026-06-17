@@ -170,8 +170,8 @@ export default function ReturningUserPrompt() {
   const [loading, setLoading] = useState(false)
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [returnedName, setReturnedName] = useState('')
-  const [pendingRegistration, setPendingRegistration] = useState<RegistrationInfo | null>(null)
   const [currentRegistration, setCurrentRegistration] = useState<RegistrationInfo | null>(null)
+  const [payingBalance, setPayingBalance] = useState(false)
   const [balancePaid, setBalancePaid] = useState(false)
   const [addingMinor, setAddingMinor] = useState(false)
   const [minorAdded, setMinorAdded] = useState(false)
@@ -223,9 +223,6 @@ export default function ReturningUserPrompt() {
         setReturnedName(profile.firstName || '')
         const reg = result.registrations?.find(r => r.eventId === selectedEvent.id)
         if (reg) setCurrentRegistration(reg)
-        if (reg && reg.paymentStatus === 'partial' && reg.totalOwed > reg.totalPaid) {
-          setPendingRegistration(reg)
-        }
         setAlreadyRegistered(true)
         return
       }
@@ -242,8 +239,8 @@ export default function ReturningUserPrompt() {
 
   const handleReset = () => {
     setAlreadyRegistered(false)
-    setPendingRegistration(null)
     setCurrentRegistration(null)
+    setPayingBalance(false)
     setBalancePaid(false)
     setAddingMinor(false)
     setMinorAdded(false)
@@ -313,37 +310,47 @@ export default function ReturningUserPrompt() {
     )
   }
 
-  // Show balance payment form
-  if (alreadyRegistered && pendingRegistration) {
-    const remaining = pendingRegistration.totalOwed - pendingRegistration.totalPaid
+  // Outstanding balance on the existing registration? A card deposit leaves a
+  // 'partial' status; a Zelle registration sits at 'pending' with nothing paid
+  // yet — both have totalOwed > totalPaid and can be settled by card here.
+  const balanceRemaining = currentRegistration
+    ? currentRegistration.totalOwed - currentRegistration.totalPaid
+    : 0
+  const hasBalance = balanceRemaining > 0
+
+  // Show balance payment form (reached from the summary's "Pay balance" button)
+  if (alreadyRegistered && payingBalance && currentRegistration) {
     const elementsOptions: StripeElementsOptions = {
       mode: 'payment',
-      amount: Math.round(remaining * 100),
+      amount: Math.round(balanceRemaining * 100),
       currency: 'usd',
       appearance,
     }
     return (
       <Elements stripe={stripePromise} options={elementsOptions}>
         <BalancePaymentForm
-          registration={pendingRegistration}
+          registration={currentRegistration}
           email={email}
           name={returnedName}
-          onBack={handleReset}
-          onSuccess={() => setBalancePaid(true)}
+          onBack={() => setPayingBalance(false)}
+          onSuccess={() => { setPayingBalance(false); setBalancePaid(true) }}
         />
       </Elements>
     )
   }
 
-  // Already registered, fully paid
+  // Already registered — offer to settle a remaining balance and/or add a minor.
   if (alreadyRegistered) {
     return (
       <div className="flex flex-col gap-5 text-center">
         <div className="mb-2">
-          <div className="text-5xl mb-4">✓</div>
-          <h2 className="card-title">{t.returningAlreadyRegisteredTitle}</h2>
+          <div className="text-5xl mb-4">{hasBalance ? '💳' : '✓'}</div>
+          <h2 className="card-title">
+            {hasBalance ? t.balanceTitle : t.returningAlreadyRegisteredTitle}
+          </h2>
           <p className="card-subtitle mt-2">
-            {returnedName ? `${returnedName}, ` : ''}{t.returningAlreadyRegisteredMsg}
+            {returnedName ? `${returnedName}, ` : ''}
+            {hasBalance ? t.balanceSub : t.returningAlreadyRegisteredMsg}
           </p>
         </div>
         <div className="bg-glacier/10 border border-glacier/20 rounded-xl px-4 py-3">
@@ -352,8 +359,17 @@ export default function ReturningUserPrompt() {
             <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
           )}
         </div>
+        {hasBalance && (
+          <button type="button" onClick={() => setPayingBalance(true)} className="btn-primary w-full">
+            {t.balancePayBtn} — ${balanceRemaining.toFixed(2)}
+          </button>
+        )}
         {currentRegistration && (
-          <button type="button" onClick={() => setAddingMinor(true)} className="btn-primary w-full">
+          <button
+            type="button"
+            onClick={() => setAddingMinor(true)}
+            className={hasBalance ? 'btn-ghost w-full' : 'btn-primary w-full'}
+          >
             {t.addMinorCta}
           </button>
         )}
