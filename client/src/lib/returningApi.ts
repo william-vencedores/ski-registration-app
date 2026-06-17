@@ -13,7 +13,7 @@ export interface RegistrationInfo {
 
 export interface VerifyResult {
   verified: boolean
-  profile?: ProfileData
+  profile?: ProfileData | null
   registeredEventIds?: string[]
   registrations?: RegistrationInfo[]
   error?: string

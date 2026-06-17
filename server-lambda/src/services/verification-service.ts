@@ -83,7 +83,10 @@ export async function verifyCode(
 
   const profileResult = await getLatestProfile(normalizedEmail);
   if (!profileResult) {
-    return { verified: true, profile: {}, registeredEventIds: [] };
+    // Code was valid, but this email has no registration on file — signal that
+    // explicitly so the client doesn't drop the user into a blank "returning"
+    // form (e.g. they registered with a different email).
+    return { verified: true, profile: null, registeredEventIds: [], registrations: [] };
   }
 
   return {

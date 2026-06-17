@@ -202,28 +202,37 @@ export default function ReturningUserPrompt() {
     setError('')
     try {
       const result = await verifyCode(email.trim(), code.trim())
-      if (result.verified && result.profile) {
-        // Check if already registered for this event
-        if (selectedEvent && result.registeredEventIds?.includes(selectedEvent.id)) {
-          setReturnedName(result.profile.firstName || '')
-          // Check if there's a pending balance
-          const reg = result.registrations?.find(r => r.eventId === selectedEvent.id)
-          if (reg) setCurrentRegistration(reg)
-          if (reg && reg.paymentStatus === 'partial' && reg.totalOwed > reg.totalPaid) {
-            setPendingRegistration(reg)
-          }
-          setAlreadyRegistered(true)
-          return
-        }
-        setFormData(result.profile)
-        setIsReturningUser(true)
-        setCurrentStep(1)
-      } else {
+      if (!result.verified) {
         const errorKey = result.error as string
         if (errorKey === 'code_expired') setError(t.returningExpiredCode)
         else if (errorKey === 'max_attempts') setError(t.returningMaxAttempts)
         else setError(t.returningInvalidCode)
+        return
       }
+
+      // Code was valid but no registration exists for this email (e.g. they
+      // registered with a different address). Don't drop them into a blank form.
+      const profile = result.profile
+      if (!profile || Object.keys(profile).length === 0) {
+        setError(t.returningNoRegistration)
+        return
+      }
+
+      // Already registered for the selected event?
+      if (selectedEvent && result.registeredEventIds?.includes(selectedEvent.id)) {
+        setReturnedName(profile.firstName || '')
+        const reg = result.registrations?.find(r => r.eventId === selectedEvent.id)
+        if (reg) setCurrentRegistration(reg)
+        if (reg && reg.paymentStatus === 'partial' && reg.totalOwed > reg.totalPaid) {
+          setPendingRegistration(reg)
+        }
+        setAlreadyRegistered(true)
+        return
+      }
+
+      setFormData(profile)
+      setIsReturningUser(true)
+      setCurrentStep(1)
     } catch {
       setError(t.returningInvalidCode)
     } finally {
