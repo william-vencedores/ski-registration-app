@@ -4,6 +4,7 @@ import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import type { FormData } from '../../lib/events'
 import { checkRegistration } from '../../lib/events'
+import { isValidPhone } from '../../lib/phone'
 import StepProgress from '../ui/StepProgress'
 import ReturningUserPrompt from './ReturningUserPrompt'
 import Step1Personal from './Step1Personal'
@@ -33,6 +34,7 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
     if (!formData.lastName.trim()) errors.lastName = t.required
     if (!formData.email.trim()) errors.email = t.required
     if (!formData.phone.trim()) errors.phone = t.required
+    else if (!isValidPhone(formData.phone)) errors.phone = t.invalidPhone
     if (!formData.dob) errors.dob = t.required
     formData.minors.forEach((m, i) => {
       if (!m.firstName.trim()) errors[`minor${i}FirstName`] = t.required
@@ -43,6 +45,7 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
   if (formStep === 1) {
     if (!formData.emergencyName.trim()) errors.emergencyName = t.required
     if (!formData.emergencyPhone.trim()) errors.emergencyPhone = t.required
+    else if (!isValidPhone(formData.emergencyPhone)) errors.emergencyPhone = t.invalidPhone
     if (!formData.emergencyRelation || formData.emergencyRelation === '—') errors.emergencyRelation = t.required
   }
   if (formStep === 2) {

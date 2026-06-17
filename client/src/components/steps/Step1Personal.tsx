@@ -1,6 +1,7 @@
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import type { Minor } from '../../lib/events'
+import { formatPhone } from '../../lib/phone'
 
 interface Props {
   errors: Record<string, string>
@@ -10,13 +11,19 @@ export default function Step1Personal({ errors }: Props) {
   const { formData, setFormData } = useAppStore()
   const { t } = useTranslation()
 
-  const field = (key: keyof typeof formData, label: string, type = 'text', placeholder = '') => (
+  const field = (
+    key: keyof typeof formData,
+    label: string,
+    type = 'text',
+    placeholder = '',
+    format?: (v: string) => string
+  ) => (
     <div>
       <label className="form-label">{label}</label>
       <input
         type={type}
         value={formData[key] as string}
-        onChange={(e) => setFormData({ [key]: e.target.value })}
+        onChange={(e) => setFormData({ [key]: format ? format(e.target.value) : e.target.value })}
         placeholder={placeholder}
         className={`form-input ${errors[key] ? 'invalid' : ''}`}
       />
@@ -63,7 +70,7 @@ export default function Step1Personal({ errors }: Props) {
         {field('firstName', t.firstName)}
         {field('lastName', t.lastName)}
         {field('email', t.email, 'email', 'you@example.com')}
-        {field('phone', t.phone, 'tel', '+1 (555) 000-0000')}
+        {field('phone', t.phone, 'tel', '(555) 123-4567', formatPhone)}
         {field('dob', t.dob, 'date')}
       </div>
 

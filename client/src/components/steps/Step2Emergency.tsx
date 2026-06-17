@@ -1,5 +1,6 @@
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
+import { formatPhone } from '../../lib/phone'
 
 interface Props {
   errors: Record<string, string>
@@ -27,8 +28,8 @@ export default function Step2Emergency({ errors }: Props) {
         <input
           type="tel"
           value={formData.emergencyPhone}
-          onChange={(e) => setFormData({ emergencyPhone: e.target.value })}
-          placeholder="+1 (555) 000-0000"
+          onChange={(e) => setFormData({ emergencyPhone: formatPhone(e.target.value) })}
+          placeholder="(555) 123-4567"
           className={`form-input ${errors.emergencyPhone ? 'invalid' : ''}`}
         />
         {errors.emergencyPhone && <p className="text-red-500 text-xs mt-1">{errors.emergencyPhone}</p>}
