@@ -23,6 +23,25 @@ export async function handleGetRegistration(event: APIGatewayProxyEventV2, id: s
   }
 }
 
+export async function handleUpdateRegistration(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
+  try {
+    requireAuth(event);
+    const body = JSON.parse(event.body || '{}');
+    return jsonResponse(200, await registrationService.updateRegistration(id, body));
+  } catch (e) {
+    return handleError(e);
+  }
+}
+
+export async function handleDeleteRegistration(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
+  try {
+    requireAuth(event);
+    return jsonResponse(200, await registrationService.deleteRegistration(id));
+  } catch (e) {
+    return handleError(e);
+  }
+}
+
 export async function handleToggleAttendance(event: APIGatewayProxyEventV2, id: string): Promise<APIGatewayProxyResultV2> {
   try {
     const username = requireAuth(event);

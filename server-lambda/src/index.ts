@@ -20,7 +20,7 @@ import { handleWebhook } from './handlers/webhook.js';
 import {
   handleListRegistrations, handleGetRegistration,
   handleToggleAttendance, handleResendEmail, handleStats, handleMarkAsPaid,
-  handleSetAmountPaid,
+  handleSetAmountPaid, handleUpdateRegistration, handleDeleteRegistration,
 } from './handlers/admin.js';
 // Disclosure handlers
 import {
@@ -160,8 +160,10 @@ async function route(
   }
   {
     const match = path.match(/^\/api\/admin\/registrations\/([^/]+)$/);
-    if (method === 'GET' && match) {
-      return handleGetRegistration(event, match[1]);
+    if (match) {
+      if (method === 'GET') return handleGetRegistration(event, match[1]);
+      if (method === 'PUT') return handleUpdateRegistration(event, match[1]);
+      if (method === 'DELETE') return handleDeleteRegistration(event, match[1]);
     }
   }
 

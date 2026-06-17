@@ -96,6 +96,22 @@ export async function updateEvent(
   return itemToEventMap(item);
 }
 
+/** Restore one spot when a registration is removed (capped at capacity). */
+export async function incrementSpotsLeft(eventId: string): Promise<void> {
+  const event = await getEvent(eventId);
+  const capacity = (event.capacity as number) || 0;
+  if (capacity === 0) return; // no capacity limit set
+  const spotsLeft = (event.spotsLeft as number) || 0;
+  const newSpotsLeft = Math.min(capacity, spotsLeft + 1);
+  await repo.updateItem(
+    `EVENT#${eventId}`,
+    'METADATA',
+    'SET spotsLeft = :s, updatedAt = :now',
+    { ':s': newSpotsLeft, ':now': new Date().toISOString() },
+    null
+  );
+}
+
 export async function decrementSpotsLeft(eventId: string): Promise<void> {
   const event = await getEvent(eventId);
   const capacity = (event.capacity as number) || 0;

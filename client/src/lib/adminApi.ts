@@ -115,6 +115,20 @@ export async function setAmountPaid(id: string, amount: number) {
   return res.data
 }
 
+export type RegistrationEdit = Partial<Pick<Registration,
+  'firstName' | 'lastName' | 'email' | 'phone' | 'dob' |
+  'emergencyName' | 'emergencyPhone' | 'emergencyRelation' | 'skillLevel' | 'dietary'>>
+
+export async function updateRegistration(id: string, updates: RegistrationEdit) {
+  const res = await axios.put(`/api/admin/registrations/${id}`, updates)
+  return res.data
+}
+
+export async function deleteRegistration(id: string) {
+  const res = await axios.delete(`/api/admin/registrations/${id}`)
+  return res.data
+}
+
 // ── Events (Admin) ─────────────────────────────────────────
 
 export function useAdminEvents() {

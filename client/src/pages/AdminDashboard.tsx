@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminStore } from '../lib/adminStore'
 import { useRegistrations, useAdminEvents, type Registration } from '../lib/adminApi'
@@ -40,12 +40,15 @@ export default function AdminDashboard() {
 
   const handleUpdate = () => {
     refetch()
-    if (selected) {
-      // Re-find updated record
-      const updated = data.find((r) => r.id === selected.id)
-      setSelected(updated ?? null)
-    }
   }
+
+  // Keep the open detail panel in sync with freshly fetched data (e.g. after an
+  // edit or amount-paid change). If the record is gone (deleted), close it.
+  useEffect(() => {
+    if (!selected) return
+    const fresh = data.find((r) => r.id === selected.id)
+    if (fresh && fresh !== selected) setSelected(fresh)
+  }, [data])
 
   return (
     <div className="min-h-screen text-white"

@@ -446,6 +446,127 @@ export async function getRegistration(regId: string): Promise<Record<string, unk
   return itemToRegistrationMap(items[0]);
 }
 
+/** Fields an admin may edit on a registration. */
+const EDITABLE_FIELDS = [
+  'firstName', 'lastName', 'email', 'phone', 'dob',
+  'emergencyName', 'emergencyPhone', 'emergencyRelation',
+  'skillLevel', 'dietary',
+] as const;
+
+/**
+ * Update editable contact/personal fields on a registration. When the email
+ * changes we also move the GSI2 lookup key (and cascade it to any linked
+ * minors) so returning-user verification keeps finding the group.
+ */
+export async function updateRegistration(
+  regId: string,
+  updates: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${regId}`, 'GSI1SK', null);
+  if (items.length === 0) {
+    throw new NotFoundError(`Registration not found: ${regId}`);
+  }
+  const item = items[0];
+
+  const setParts: string[] = [];
+  const exprValues: Record<string, unknown> = {};
+  const exprNames: Record<string, string> = {};
+  let newEmailNormalized: string | null = null;
+
+  for (const field of EDITABLE_FIELDS) {
+    if (updates[field] === undefined) continue;
+    let value = updates[field];
+
+    if (field === 'email') {
+      const email = String(value).trim();
+      if (!isValidEmail(email)) {
+        throw new BadRequestError('A valid email address is required');
+      }
+      value = email;
+      const normalized = email.toLowerCase();
+      if (normalized !== String(item.email ?? '').toLowerCase()) {
+        newEmailNormalized = normalized;
+      }
+    } else if (typeof value === 'string') {
+      value = value.trim();
+    }
+
+    exprNames[`#${field}`] = field;
+    exprValues[`:${field}`] = value;
+    setParts.push(`#${field} = :${field}`);
+  }
+
+  if (newEmailNormalized) {
+    exprValues[':gsi2pk'] = `EMAIL#${newEmailNormalized}`;
+    setParts.push('GSI2PK = :gsi2pk');
+  }
+
+  if (setParts.length === 0) {
+    return getRegistration(regId);
+  }
+
+  await repo.updateItem(
+    item.PK as string,
+    item.SK as string,
+    `SET ${setParts.join(', ')}`,
+    exprValues,
+    exprNames
+  );
+
+  // Cascade an email change from a guardian to its minors so the whole group
+  // stays under one email partition.
+  if (newEmailNormalized && item.isMinor !== true) {
+    const eventRegs = await repo.queryByPkAndSkPrefix(`EVENT#${item.eventId}`, 'REG#');
+    const minors = eventRegs.filter((r) => (r.guardianRegId as string) === regId);
+    for (const minor of minors) {
+      await repo.updateItem(
+        minor.PK as string,
+        minor.SK as string,
+        'SET #email = :email, GSI2PK = :gsi2pk',
+        { ':email': exprValues[':email'], ':gsi2pk': `EMAIL#${newEmailNormalized}` },
+        { '#email': 'email' }
+      );
+    }
+  }
+
+  return getRegistration(regId);
+}
+
+/**
+ * Delete a registration (and its disclosure-acceptance records), restoring the
+ * event's available spots. Deleting a guardian cascades to every minor linked
+ * to them; deleting a minor removes only that minor.
+ */
+export async function deleteRegistration(
+  regId: string
+): Promise<Record<string, unknown>> {
+  const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${regId}`, 'GSI1SK', null);
+  if (items.length === 0) {
+    throw new NotFoundError(`Registration not found: ${regId}`);
+  }
+  const item = items[0];
+  const eventId = item.eventId as string;
+
+  const toDelete = [item];
+  if (item.isMinor !== true) {
+    const eventRegs = await repo.queryByPkAndSkPrefix(`EVENT#${eventId}`, 'REG#');
+    const minors = eventRegs.filter((r) => (r.guardianRegId as string) === regId);
+    toDelete.push(...minors);
+  }
+
+  for (const member of toDelete) {
+    const memberId = member.id as string;
+    const disclosures = await repo.queryByPkAndSkPrefix(`REG#${memberId}`, 'DISCLOSURE#');
+    for (const d of disclosures) {
+      await repo.deleteItem(d.PK as string, d.SK as string);
+    }
+    await repo.deleteItem(member.PK as string, member.SK as string);
+    await eventService.incrementSpotsLeft(eventId);
+  }
+
+  return { success: true, deleted: toDelete.length };
+}
+
 export async function toggleAttendance(
   regId: string,
   attended: boolean,

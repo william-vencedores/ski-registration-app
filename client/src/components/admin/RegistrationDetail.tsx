@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Registration } from '../../lib/adminApi'
-import { toggleAttendance, resendEmail, markAsPaid, setAmountPaid } from '../../lib/adminApi'
+import type { Registration, RegistrationEdit } from '../../lib/adminApi'
+import { toggleAttendance, resendEmail, markAsPaid, setAmountPaid, updateRegistration, deleteRegistration } from '../../lib/adminApi'
+import { formatPhone, isValidPhone } from '../../lib/phone'
+import { isValidEmail } from '../../lib/email'
+
+const EMPTY_EDIT: RegistrationEdit = {
+  firstName: '', lastName: '', email: '', phone: '', dob: '',
+  emergencyName: '', emergencyPhone: '', emergencyRelation: '',
+}
 
 const SKILL_LABELS: Record<string, string> = {
   beginner: '🎿 Beginner', intermediate: '⛷️ Intermediate',
@@ -25,11 +32,61 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
   const [savingPaid, setSavingPaid] = useState(false)
   const [paidSaved, setPaidSaved] = useState(false)
 
-  // Sync the amount-paid input whenever a different registration is opened.
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState<RegistrationEdit>(EMPTY_EDIT)
+  const [editError, setEditError] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  // Sync inputs whenever a different registration is opened.
   useEffect(() => {
     setPaidInput(reg ? String(reg.totalPaid ?? 0) : '')
     setPaidSaved(false)
+    setEditing(false)
+    setEditError('')
+    setConfirmDelete(false)
+    setForm(reg ? {
+      firstName: reg.firstName, lastName: reg.lastName, email: reg.email,
+      phone: reg.phone, dob: reg.dob, emergencyName: reg.emergencyName,
+      emergencyPhone: reg.emergencyPhone, emergencyRelation: reg.emergencyRelation,
+    } : EMPTY_EDIT)
   }, [reg?.id])
+
+  const setField = (key: keyof RegistrationEdit, value: string) =>
+    setForm((f) => ({ ...f, [key]: value }))
+
+  const handleSaveEdit = async () => {
+    if (!reg) return
+    setEditError('')
+    if (!form.firstName?.trim() || !form.lastName?.trim()) { setEditError('Name is required'); return }
+    if (!isValidEmail(String(form.email ?? ''))) { setEditError('Enter a valid email'); return }
+    if (!form.phone || !isValidPhone(form.phone)) { setEditError('Enter a valid phone'); return }
+    if (form.emergencyPhone && !isValidPhone(form.emergencyPhone)) { setEditError('Enter a valid emergency phone'); return }
+    setSavingEdit(true)
+    try {
+      await updateRegistration(reg.id, form)
+      setEditing(false)
+      onUpdate()
+    } catch (e: any) {
+      setEditError(e?.response?.data?.error || 'Failed to save changes')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!reg) return
+    setDeleting(true)
+    try {
+      await deleteRegistration(reg.id)
+      onUpdate()
+      onClose()
+    } catch (e) {
+      console.error(e)
+      setDeleting(false)
+    }
+  }
 
   const handleSaveAmountPaid = async () => {
     if (!reg) return
@@ -105,6 +162,24 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
     </div>
   )
 
+  const EditField = ({ label, field, type = 'text', format }: {
+    label: string
+    field: keyof RegistrationEdit
+    type?: string
+    format?: (v: string) => string
+  }) => (
+    <div className="py-1.5">
+      <label className="text-slate-500 text-xs uppercase tracking-wider">{label}</label>
+      <input
+        type={type}
+        value={String(form[field] ?? '')}
+        onChange={(e) => setField(field, format ? format(e.target.value) : e.target.value)}
+        className="w-full mt-1 bg-[#0d1f38] border border-white/15 rounded-lg px-3 py-2
+                   text-sm text-white focus:outline-none focus:border-glacier"
+      />
+    </div>
+  )
+
   return (
     <AnimatePresence>
       {reg && (
@@ -133,11 +208,20 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 </h3>
                 <p className="text-xs text-slate-400">{reg.firstName} {reg.lastName}</p>
               </div>
-              <button onClick={onClose}
-                      className="w-8 h-8 rounded-lg bg-white/8 hover:bg-white/15
-                                 text-white/60 hover:text-white transition-all flex items-center justify-center">
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                {!editing && (
+                  <button onClick={() => { setEditing(true); setConfirmDelete(false) }}
+                          className="px-3 h-8 rounded-lg bg-white/8 hover:bg-white/15
+                                     text-white/70 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold">
+                    ✏️ Edit
+                  </button>
+                )}
+                <button onClick={onClose}
+                        className="w-8 h-8 rounded-lg bg-white/8 hover:bg-white/15
+                                   text-white/60 hover:text-white transition-all flex items-center justify-center">
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="p-6">
@@ -228,19 +312,41 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
               </Section>
 
               <Section title="Personal Info">
-                <Row label="Name" value={`${reg.firstName} ${reg.lastName}`} />
-                <Row label="Email" value={reg.email} />
-                <Row label="Phone" value={reg.phone} />
-                <Row label="DOB" value={reg.dob} />
+                {editing ? (
+                  <>
+                    <EditField label="First Name" field="firstName" />
+                    <EditField label="Last Name" field="lastName" />
+                    <EditField label="Email" field="email" type="email" />
+                    <EditField label="Phone" field="phone" type="tel" format={formatPhone} />
+                    <EditField label="DOB" field="dob" type="date" />
+                  </>
+                ) : (
+                  <>
+                    <Row label="Name" value={`${reg.firstName} ${reg.lastName}`} />
+                    <Row label="Email" value={reg.email} />
+                    <Row label="Phone" value={reg.phone} />
+                    <Row label="DOB" value={reg.dob} />
+                  </>
+                )}
                 {reg.isMinor && reg.guardianName && (
                   <Row label="Guardian" value={`${reg.guardianName} (#${reg.guardianRegId})`} />
                 )}
               </Section>
 
               <Section title="Emergency Contact">
-                <Row label="Contact" value={reg.emergencyName} />
-                <Row label="Phone" value={reg.emergencyPhone} />
-                <Row label="Relationship" value={reg.emergencyRelation} />
+                {editing ? (
+                  <>
+                    <EditField label="Contact" field="emergencyName" />
+                    <EditField label="Phone" field="emergencyPhone" type="tel" format={formatPhone} />
+                    <EditField label="Relationship" field="emergencyRelation" />
+                  </>
+                ) : (
+                  <>
+                    <Row label="Contact" value={reg.emergencyName} />
+                    <Row label="Phone" value={reg.emergencyPhone} />
+                    <Row label="Relationship" value={reg.emergencyRelation} />
+                  </>
+                )}
               </Section>
 
               <Section title="Ski & Diet">
@@ -254,7 +360,42 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 <Row label="Medications" value={reg.medMedications === 'yes' ? '⚠️ Yes' : 'No'} />
               </Section>
 
+              {/* Edit controls */}
+              {editing && (
+                <div className="flex flex-col gap-3 pt-2">
+                  {editError && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2 text-xs text-red-300">
+                      ⚠️ {editError}
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { setEditing(false); setEditError('') }}
+                      disabled={savingEdit}
+                      className="flex-1 py-3 rounded-xl font-semibold text-sm
+                                 bg-white/8 text-white/70 border border-white/15
+                                 hover:bg-white/15 transition-all disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={savingEdit}
+                      className="flex-1 py-3 rounded-xl font-semibold text-sm
+                                 bg-glacier/20 text-glacier border border-glacier/40
+                                 hover:bg-glacier/30 transition-all disabled:opacity-50
+                                 flex items-center justify-center gap-2"
+                    >
+                      {savingEdit
+                        ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                        : '✓ Save Changes'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
+              {!editing && (
               <div className="flex flex-col gap-3 pt-2">
                 {(reg.paymentStatus === 'pending' || reg.paymentStatus === 'partial') && (
                   <button
@@ -303,7 +444,54 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                     : '📧 Resend Confirmation'
                   }
                 </button>
+
+                {/* Delete */}
+                <div className="pt-3 mt-2 border-t border-white/8">
+                  {confirmDelete ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs text-red-300 text-center">
+                        {reg.isMinor
+                          ? 'Delete this minor registration? This cannot be undone.'
+                          : 'Delete this registration? Any linked minors will be removed too. This cannot be undone.'}
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setConfirmDelete(false)}
+                          disabled={deleting}
+                          className="flex-1 py-2.5 rounded-xl font-semibold text-sm
+                                     bg-white/8 text-white/70 border border-white/15
+                                     hover:bg-white/15 transition-all disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleDelete}
+                          disabled={deleting}
+                          className="flex-1 py-2.5 rounded-xl font-semibold text-sm
+                                     bg-red-500/20 text-red-300 border border-red-500/40
+                                     hover:bg-red-500/30 transition-all disabled:opacity-50
+                                     flex items-center justify-center gap-2"
+                        >
+                          {deleting
+                            ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                            : '🗑 Confirm Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full py-3 rounded-xl font-semibold text-sm
+                                 bg-red-500/10 text-red-300/80 border border-red-500/20
+                                 hover:bg-red-500/20 hover:text-red-300 transition-all
+                                 flex items-center justify-center gap-2"
+                    >
+                      🗑 Delete Registration
+                    </button>
+                  )}
+                </div>
               </div>
+              )}
             </div>
           </motion.div>
         </>
