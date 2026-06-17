@@ -117,11 +117,6 @@ function CardCheckout({ paymentType, hasDeposit, chargeTotal }: CardCheckoutProp
     <>
       <div>
         <PaymentElement options={{ layout: 'tabs' }} />
-        <div className="flex items-center gap-1.5 mt-2 justify-end">
-          <span className="text-[11px] text-slate-400">{t.stripeNote}</span>
-          <span className="font-bold text-[11px] text-[#635bff]">Stripe</span>
-          <span className="text-slate-300">🔒</span>
-        </div>
       </div>
 
       {error && (

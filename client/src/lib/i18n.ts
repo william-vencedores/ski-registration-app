@@ -81,7 +81,6 @@ export const translations = {
     sendNow: 'A Enviar Ahora',
     remainingBalance: 'Saldo restante',
     cardLabel: 'Información de Tarjeta',
-    stripeNote: 'Pago seguro · Powered by',
     payBtn: '💳 Pagar y Confirmar Registro',
     processing: 'Procesando...',
     // Payment method
@@ -233,7 +232,6 @@ export const translations = {
     sendNow: 'Send Now',
     remainingBalance: 'Remaining balance',
     cardLabel: 'Card Information',
-    stripeNote: 'Secure SSL payment · Powered by',
     payBtn: '💳 Pay & Confirm Registration',
     processing: 'Processing...',
     // Payment method
