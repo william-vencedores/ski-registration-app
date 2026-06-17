@@ -3,12 +3,19 @@ import type { FormData, Minor } from './events'
 
 export type ProfileData = Omit<FormData, 'liabilityAccepted' | 'medicalAccepted' | 'signature'>
 
+export interface Participant {
+  firstName: string
+  lastName: string
+  isMinor: boolean
+}
+
 export interface RegistrationInfo {
   eventId: string
   confirmationId: string
   totalPaid: number
   totalOwed: number
   paymentStatus: string
+  participants?: Participant[]
 }
 
 export interface VerifyResult {

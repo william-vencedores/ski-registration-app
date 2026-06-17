@@ -125,9 +125,20 @@ export async function createBalancePaymentIntent(
   }
 
   const reg = items[0];
-  const totalPaid = (reg.totalPaid as number) || 0;
-  const totalOwed = (reg.totalOwed as number) || 0;
-  const remaining = totalOwed - totalPaid;
+
+  // Settle the whole group: the guardian plus any minors linked to them. Each
+  // participant is its own record with its own balance, so the amount due is the
+  // sum of every outstanding per-person balance.
+  const eventId = reg.eventId as string;
+  const eventRegs = await repo.queryByPkAndSkPrefix(`EVENT#${eventId}`, 'REG#');
+  const group = eventRegs.filter(
+    (r) => r.id === registrationId || (r.guardianRegId as string) === registrationId
+  );
+  const remaining = group.reduce((sum, r) => {
+    const owed = (r.totalOwed as number) || 0;
+    const paid = (r.totalPaid as number) || 0;
+    return sum + Math.max(0, owed - paid);
+  }, 0);
 
   if (remaining <= 0) {
     throw new BadRequestError('No balance remaining');

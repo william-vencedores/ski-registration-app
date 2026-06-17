@@ -114,15 +114,33 @@ async function getLatestProfile(email: string) {
   // adult's own registration.
   const adultItems = items.filter((item) => item.isMinor !== true);
 
+  // Each registration represents the guardian's whole group: the guardian plus
+  // any minors linked to them. Totals are summed across the group so the
+  // returning screen can show one balance and one participant list.
   const registrations = adultItems
     .filter((item) => (item.eventId as string)?.length > 0)
-    .map((item) => ({
-      eventId: item.eventId ?? '',
-      confirmationId: item.id ?? '',
-      totalPaid: (item.totalPaid as number) ?? 0,
-      totalOwed: (item.totalOwed as number) ?? 0,
-      paymentStatus: item.paymentStatus ?? '',
-    }));
+    .map((guardian) => {
+      const guardianId = guardian.id as string;
+      const minorItems = items.filter(
+        (it) => it.isMinor === true && (it.guardianRegId as string) === guardianId
+      );
+      const group = [guardian, ...minorItems];
+      const participants = group.map((p) => ({
+        firstName: (p.firstName as string) ?? '',
+        lastName: (p.lastName as string) ?? '',
+        isMinor: p.isMinor === true,
+      }));
+      const totalPaid = group.reduce((sum, p) => sum + ((p.totalPaid as number) || 0), 0);
+      const totalOwed = group.reduce((sum, p) => sum + ((p.totalOwed as number) || 0), 0);
+      return {
+        eventId: guardian.eventId ?? '',
+        confirmationId: guardianId,
+        totalPaid,
+        totalOwed,
+        paymentStatus: guardian.paymentStatus ?? '',
+        participants,
+      };
+    });
 
   // Get the most recent adult registration (last item, sorted by GSI2SK = createdAt)
   const profileSource = adultItems.length > 0 ? adultItems : items;

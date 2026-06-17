@@ -155,6 +155,9 @@ export const translations = {
     balanceProcessingPayment: 'Procesando pago...',
     balanceSuccess: 'Pago completado! Tu balance ha sido saldado.',
     balanceSuccessTitle: 'PAGO COMPLETADO',
+    yourRegistration: 'Tu registro',
+    amountPaid: 'Pagado',
+    minorBadge: 'Menor',
   },
   en: {
     headerSub: 'Ski Group · Registration 2027',
@@ -301,6 +304,9 @@ export const translations = {
     balanceProcessingPayment: 'Processing payment...',
     balanceSuccess: 'Payment complete! Your balance has been paid.',
     balanceSuccessTitle: 'PAYMENT COMPLETE',
+    yourRegistration: 'Your registration',
+    amountPaid: 'Paid',
+    minorBadge: 'Minor',
   },
 } as const
 

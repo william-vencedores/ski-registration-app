@@ -496,35 +496,45 @@ export async function resendEmail(regId: string): Promise<Record<string, unknown
 
 export async function payBalance(
   regId: string,
-  amountPaid: number
+  _amountPaid: number
 ): Promise<Record<string, unknown>> {
   const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${regId}`, 'GSI1SK', null);
   if (items.length === 0) {
     throw new NotFoundError(`Registration not found: ${regId}`);
   }
 
-  const item = items[0];
-  const pk = item.PK as string;
-  const sk = item.SK as string;
-  const currentPaid = (item.totalPaid as number) || 0;
-  const totalOwed = (item.totalOwed as number) || 0;
-
-  const newTotalPaid = currentPaid + amountPaid;
-  const newStatus = newTotalPaid >= totalOwed ? 'paid' : 'partial';
-
-  await repo.updateItem(
-    pk,
-    sk,
-    'SET totalPaid = :paid, paymentStatus = :status',
-    { ':paid': newTotalPaid, ':status': newStatus },
-    null
+  // The balance payment settles the whole group in full (the client charges the
+  // summed remaining of the guardian plus any linked minors), so mark every
+  // outstanding per-person record paid. The amount charged is authoritative
+  // server-side via createBalancePaymentIntent.
+  const guardian = items[0];
+  const eventId = guardian.eventId as string;
+  const eventRegs = await repo.queryByPkAndSkPrefix(`EVENT#${eventId}`, 'REG#');
+  const group = eventRegs.filter(
+    (r) => r.id === regId || (r.guardianRegId as string) === regId
   );
+
+  let groupPaid = 0;
+  let groupOwed = 0;
+  for (const member of group) {
+    const owed = (member.totalOwed as number) || 0;
+    groupOwed += owed;
+    groupPaid += owed;
+    if (((member.totalPaid as number) || 0) >= owed) continue;
+    await repo.updateItem(
+      member.PK as string,
+      member.SK as string,
+      'SET totalPaid = :paid, paymentStatus = :status',
+      { ':paid': owed, ':status': 'paid' },
+      null
+    );
+  }
 
   return {
     success: true,
-    totalPaid: newTotalPaid,
-    totalOwed,
-    paymentStatus: newStatus,
+    totalPaid: groupPaid,
+    totalOwed: groupOwed,
+    paymentStatus: 'paid',
   };
 }
 

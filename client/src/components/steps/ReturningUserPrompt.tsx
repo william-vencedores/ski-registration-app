@@ -32,6 +32,56 @@ const appearance: Appearance = {
 
 type Phase = 'choice' | 'email' | 'code'
 
+// Event + participant roster + amount paid / balance for an existing group
+// registration (the guardian plus any minors linked to them).
+function RegistrationSummary({ registration }: { registration: RegistrationInfo }) {
+  const { t } = useTranslation()
+  const { selectedEvent } = useAppStore()
+  const participants = registration.participants ?? []
+  const remaining = registration.totalOwed - registration.totalPaid
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-black/8 text-left">
+      <div className="bg-gradient-to-br from-slate-900 to-alpine px-5 py-3">
+        <div className="font-semibold text-sm text-white">{selectedEvent?.name}</div>
+        {selectedEvent?.location && (
+          <div className="text-xs text-glacier">{selectedEvent.location}</div>
+        )}
+      </div>
+      <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
+        {participants.length > 0 && (
+          <>
+            <div className="flex justify-between text-[11px] uppercase tracking-wider text-slate-400">
+              <span>{t.yourRegistration}</span>
+              <span>{participants.length} {t.participants}</span>
+            </div>
+            {participants.map((p, i) => (
+              <div key={i} className="flex justify-between items-center text-sm text-slate-700">
+                <span>{p.firstName} {p.lastName}</span>
+                {p.isMinor && (
+                  <span className="text-[10px] uppercase tracking-wider bg-glacier/15 text-glacier rounded-full px-2 py-0.5">
+                    {t.minorBadge}
+                  </span>
+                )}
+              </div>
+            ))}
+          </>
+        )}
+        <div className="flex justify-between text-sm text-slate-600 pt-2 border-t border-black/8">
+          <span>{t.amountPaid}</span>
+          <span>${registration.totalPaid.toFixed(2)}</span>
+        </div>
+        {remaining > 0 && (
+          <div className="flex justify-between text-sm font-semibold text-amber-600">
+            <span>{t.balanceRemaining}</span>
+            <span>${remaining.toFixed(2)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
   registration: RegistrationInfo
   email: string
@@ -42,12 +92,10 @@ function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
   const stripe = useStripe()
   const elements = useElements()
   const { t } = useTranslation()
-  const { selectedEvent } = useAppStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const remaining = registration.totalOwed - registration.totalPaid
-  const chargeTotal = remaining
+  const chargeTotal = registration.totalOwed - registration.totalPaid
 
   const handlePay = async () => {
     if (!stripe || !elements) return
@@ -102,19 +150,11 @@ function BalancePaymentForm({ registration, email, name, onBack, onSuccess }: {
         </p>
       </div>
 
+      <RegistrationSummary registration={registration} />
+
       <div className="rounded-xl overflow-hidden border border-black/8">
-        <div className="bg-gradient-to-br from-slate-900 to-alpine px-5 py-3">
-          <div className="font-semibold text-sm text-white">{selectedEvent?.name}</div>
-          {selectedEvent?.location && (
-            <div className="text-xs text-glacier">{selectedEvent.location}</div>
-          )}
-        </div>
         <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5 text-left">
-          <div className="flex justify-between text-sm text-slate-600">
-            <span>{t.balanceRemaining}</span>
-            <span>${remaining.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
+          <div className="flex justify-between font-bold text-slate-900">
             <span className="text-xs tracking-widest uppercase">{t.balanceTotal}</span>
             <span className="font-cinzel text-lg text-deep-sky">${chargeTotal.toFixed(2)} USD</span>
           </div>
@@ -259,12 +299,7 @@ export default function ReturningUserPrompt() {
           <h2 className="card-title">{t.balanceSuccessTitle}</h2>
           <p className="card-subtitle mt-2">{t.balanceSuccess}</p>
         </div>
-        <div className="bg-glacier/10 border border-glacier/20 rounded-xl px-4 py-3">
-          <p className="text-sm text-glacier font-semibold">{selectedEvent?.name}</p>
-          {selectedEvent?.date && (
-            <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
-          )}
-        </div>
+        {currentRegistration && <RegistrationSummary registration={currentRegistration} />}
         {currentRegistration && (
           <button type="button" onClick={() => { setBalancePaid(false); setAddingMinor(true) }} className="btn-primary w-full">
             {t.addMinorCta}
@@ -333,7 +368,14 @@ export default function ReturningUserPrompt() {
           email={email}
           name={returnedName}
           onBack={() => setPayingBalance(false)}
-          onSuccess={() => { setPayingBalance(false); setBalancePaid(true) }}
+          onSuccess={() => {
+            setPayingBalance(false)
+            // Reflect the now-settled group so the success summary shows paid in full.
+            setCurrentRegistration((prev) =>
+              prev ? { ...prev, totalPaid: prev.totalOwed, paymentStatus: 'paid' } : prev
+            )
+            setBalancePaid(true)
+          }}
         />
       </Elements>
     )
@@ -353,12 +395,7 @@ export default function ReturningUserPrompt() {
             {hasBalance ? t.balanceSub : t.returningAlreadyRegisteredMsg}
           </p>
         </div>
-        <div className="bg-glacier/10 border border-glacier/20 rounded-xl px-4 py-3">
-          <p className="text-sm text-glacier font-semibold">{selectedEvent?.name}</p>
-          {selectedEvent?.date && (
-            <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
-          )}
-        </div>
+        {currentRegistration && <RegistrationSummary registration={currentRegistration} />}
         {hasBalance && (
           <button type="button" onClick={() => setPayingBalance(true)} className="btn-primary w-full">
             {t.balancePayBtn} — ${balanceRemaining.toFixed(2)}
