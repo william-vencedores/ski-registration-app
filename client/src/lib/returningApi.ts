@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { FormData } from './events'
+import type { FormData, Minor } from './events'
 
 export type ProfileData = Omit<FormData, 'liabilityAccepted' | 'medicalAccepted' | 'signature'>
 
@@ -41,4 +41,31 @@ export async function createBalancePaymentIntent(registrationId: string, email: 
 export async function payBalance(registrationId: string, amountPaid: number) {
   const res = await axios.post('/api/registration/pay-balance', { registrationId, amountPaid })
   return res.data
+}
+
+// ── Adding minors to an existing registration ──────────────
+
+export async function createMinorsPaymentIntent(
+  guardianRegId: string,
+  minorsCount: number,
+  partialPayment: boolean
+) {
+  const res = await axios.post('/api/payment/create-minors-intent', {
+    guardianRegId,
+    minorsCount,
+    partialPayment,
+  })
+  return res.data as { clientSecret: string; chargeAmount: number; minorsCount: number }
+}
+
+export async function addMinors(payload: {
+  guardianRegId: string
+  minors: Minor[]
+  paymentMethod: 'stripe' | 'zelle'
+  paymentIntentId?: string
+  partialPayment?: boolean
+  zelleAmount?: number
+}) {
+  const res = await axios.post('/api/registration/add-minors', payload)
+  return res.data as { success: boolean; count: number; paymentStatus: string }
 }

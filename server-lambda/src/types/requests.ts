@@ -48,10 +48,32 @@ export interface SubmitRegistrationRequest {
   eventId: string;
   paymentMethod?: 'stripe' | 'zelle';
   paymentIntentId?: string;
-  totalPaid: number;
-  totalOwed: number;
+  // Amounts are computed authoritatively on the server from the event price,
+  // partialPayment flag and headcount; these are accepted for backward compat
+  // but no longer trusted.
+  totalPaid?: number;
+  totalOwed?: number;
+  partialPayment?: boolean;
   zelleAmount?: number;
+  // Minors (children) the participant is registering and paying for. Each
+  // becomes its own registration linked back to the guardian.
+  minors?: MinorInput[];
   disclosureAcceptances?: DisclosureAcceptanceInput[];
+}
+
+export interface MinorInput {
+  firstName: string;
+  lastName: string;
+  dob: string;
+}
+
+export interface AddMinorsRequest {
+  guardianRegId: string;
+  minors: MinorInput[];
+  paymentMethod?: 'stripe' | 'zelle';
+  paymentIntentId?: string;
+  partialPayment?: boolean;
+  zelleAmount?: number;
 }
 
 export interface DisclosureAcceptanceInput {

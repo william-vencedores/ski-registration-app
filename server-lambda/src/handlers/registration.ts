@@ -34,3 +34,13 @@ export async function handlePayBalance(event: APIGatewayProxyEventV2): Promise<A
     return handleError(e);
   }
 }
+
+export async function handleAddMinors(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const result = await registrationService.addMinorsToRegistration(body);
+    return jsonResponse(200, result);
+  } catch (e) {
+    return handleError(e);
+  }
+}

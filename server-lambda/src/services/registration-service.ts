@@ -3,7 +3,7 @@ import * as repo from '../repository/dynamo-repository.js';
 import * as eventService from './event-service.js';
 import * as emailService from './email-service.js';
 import { BadRequestError, NotFoundError } from '../middleware/error-handler.js';
-import type { SubmitRegistrationRequest } from '../types/requests.js';
+import type { SubmitRegistrationRequest, AddMinorsRequest, MinorInput } from '../types/requests.js';
 
 /** True if this email already has a registration for the given event. */
 export async function isAlreadyRegistered(eventId: string, email: string): Promise<boolean> {
@@ -29,34 +29,58 @@ export async function submitRegistration(
     throw new BadRequestError('You are already registered for this event.');
   }
 
-  // Validate event exists and decrement spots
+  // Validate event exists
   const event = await eventService.getEvent(req.eventId);
-  await eventService.decrementSpotsLeft(req.eventId);
 
-  const confirmationId = isZelle
-    ? randomBytes(4).toString('hex').toUpperCase()
-    : req.paymentIntentId!.substring(req.paymentIntentId!.length - 8).toUpperCase();
-  const now = new Date().toISOString();
-
-  // Payment fields differ by method. Zelle is a manual transfer verified later,
-  // so nothing is paid yet and the spot is held as 'pending'.
-  const totalOwed = req.totalOwed;
-  const totalPaid = isZelle ? 0 : req.totalPaid;
-  const paymentStatus = isZelle
+  // Compute per-person amounts authoritatively from the event (never trust the
+  // client). Every participant — the guardian and any minors — pays the same
+  // per-person price; the single card charge / Zelle transfer covers them all.
+  const price = (event.price as number) || 0;
+  const deposit = (event.deposit as number) || 0;
+  const baseAmount = req.partialPayment && deposit > 0 ? deposit : price;
+  const perPersonOwed = price;
+  const perPersonPaid = isZelle ? 0 : baseAmount;
+  const perPersonStatus = isZelle
     ? 'pending'
-    : totalPaid >= totalOwed
+    : perPersonPaid >= perPersonOwed
       ? 'paid'
       : 'partial';
 
-  // Build registration item
-  const item: Record<string, unknown> = {
+  // Keep only minors that actually have a name entered.
+  const minors = (req.minors ?? []).filter(
+    (m) => m && (m.firstName?.trim() || m.lastName?.trim())
+  );
+  const headcount = 1 + minors.length;
+
+  const now = new Date().toISOString();
+  const guardianId = isZelle
+    ? randomBytes(4).toString('hex').toUpperCase()
+    : req.paymentIntentId!.substring(req.paymentIntentId!.length - 8).toUpperCase();
+  const guardianName = `${req.firstName} ${req.lastName}`;
+  const normalizedEmail = req.email.toLowerCase().trim();
+
+  // Reserve a spot for every head. The guardian decrement mirrors the original
+  // single-person behaviour (throws if the event is already sold out). Minor
+  // decrements are best-effort: the payment is already captured by this point,
+  // so a late capacity miss must not discard a paid registration.
+  await eventService.decrementSpotsLeft(req.eventId);
+  for (let i = 0; i < minors.length; i++) {
+    try {
+      await eventService.decrementSpotsLeft(req.eventId);
+    } catch (e) {
+      if (!(e instanceof BadRequestError)) throw e;
+    }
+  }
+
+  // Guardian (primary) registration
+  const guardianItem: Record<string, unknown> = {
     PK: `EVENT#${req.eventId}`,
-    SK: `REG#${confirmationId}`,
-    GSI1PK: `REG#${confirmationId}`,
+    SK: `REG#${guardianId}`,
+    GSI1PK: `REG#${guardianId}`,
     GSI1SK: 'METADATA',
-    GSI2PK: `EMAIL#${req.email.toLowerCase().trim()}`,
+    GSI2PK: `EMAIL#${normalizedEmail}`,
     GSI2SK: now,
-    id: confirmationId,
+    id: guardianId,
     createdAt: now,
     eventId: req.eventId,
     eventName: event.name as string,
@@ -87,48 +111,67 @@ export async function submitRegistration(
     // Payment
     paymentMethod: isZelle ? 'zelle' : 'stripe',
     paymentIntentId: req.paymentIntentId ?? '',
-    totalPaid,
-    totalOwed,
-    paymentStatus,
+    totalPaid: perPersonPaid,
+    totalOwed: perPersonOwed,
+    paymentStatus: perPersonStatus,
+    isMinor: false,
   };
-
-  // For Zelle, record the amount the participant says they will send (informational).
   if (isZelle) {
-    item.zelleAmount = req.zelleAmount ?? 0;
+    guardianItem.zelleAmount = baseAmount;
   }
 
-  await repo.putItem(item);
+  await repo.putItem(guardianItem);
+  await saveDisclosureAcceptances(guardianId, req.disclosureAcceptances, now);
 
-  // Save disclosure acceptances
-  if (req.disclosureAcceptances) {
-    for (const acceptance of req.disclosureAcceptances) {
-      await repo.putItem({
-        PK: `REG#${confirmationId}`,
-        SK: `DISCLOSURE#${acceptance.disclosureId}`,
-        regId: confirmationId,
-        disclosureId: acceptance.disclosureId,
-        acceptedVersion: acceptance.version,
-        acceptedAt: now,
-      });
-    }
+  // One registration per minor, linked back to the guardian. We only collected
+  // the minor's name and date of birth; contact and emergency details are
+  // inherited from the guardian, who signs the documents on their behalf.
+  const minorCtx: MinorContext = {
+    eventId: req.eventId,
+    eventName: event.name as string,
+    guardianId,
+    guardianName,
+    email: req.email,
+    phone: req.phone ?? '',
+    emergencyName: req.emergencyName ?? '',
+    emergencyPhone: req.emergencyPhone ?? '',
+    emergencyRelation: req.emergencyRelation ?? '',
+    signature: req.signature ?? '',
+    liabilityAccepted: req.liabilityAccepted,
+    medicalAccepted: req.medicalAccepted,
+    paymentMethod: isZelle ? 'zelle' : 'stripe',
+    paymentIntentId: req.paymentIntentId ?? '',
+    totalPaid: perPersonPaid,
+    totalOwed: perPersonOwed,
+    paymentStatus: perPersonStatus,
+    zelleAmount: baseAmount,
+  };
+  for (const minor of minors) {
+    const minorItem = buildMinorItem(minor, minorCtx, now);
+    await repo.putItem(minorItem);
+    await saveDisclosureAcceptances(minorItem.id as string, req.disclosureAcceptances, now);
   }
 
-  // Send email (fire-and-forget within Lambda timeout)
+  // Emails reflect the whole group the guardian paid for.
+  const groupPaid = perPersonPaid * headcount;
+  const groupOwed = perPersonOwed * headcount;
+  const groupZelle = baseAmount * headcount;
+
   if (isZelle) {
     await emailService.sendZellePendingEmail(
       req.email,
-      `${req.firstName} ${req.lastName}`,
+      guardianName,
       event.name as string,
-      confirmationId,
-      req.zelleAmount ?? 0
+      guardianId,
+      groupZelle
     );
   } else {
     await emailService.sendConfirmationEmail(
       req.email,
-      `${req.firstName} ${req.lastName}`,
+      guardianName,
       event.name as string,
-      confirmationId,
-      totalPaid
+      guardianId,
+      groupPaid
     );
   }
 
@@ -140,20 +183,245 @@ export async function submitRegistration(
     email: req.email,
     phone: req.phone,
     eventName: event.name as string,
-    confirmationId,
+    confirmationId: guardianId,
     paymentMethod: isZelle ? 'zelle' : 'stripe',
-    paymentStatus,
-    totalPaid,
-    totalOwed,
-    zelleAmount: req.zelleAmount,
+    paymentStatus: perPersonStatus,
+    totalPaid: groupPaid,
+    totalOwed: groupOwed,
+    zelleAmount: isZelle ? groupZelle : undefined,
+    headcount,
   });
 
   return {
     success: true,
-    confirmationId,
-    paymentStatus,
+    confirmationId: guardianId,
+    paymentStatus: perPersonStatus,
+    headcount,
     message: 'Registration successful',
   };
+}
+
+/** Persist one disclosure-acceptance record per accepted disclosure for a reg. */
+async function saveDisclosureAcceptances(
+  regId: string,
+  acceptances: SubmitRegistrationRequest['disclosureAcceptances'],
+  now: string
+): Promise<void> {
+  if (!acceptances) return;
+  for (const acceptance of acceptances) {
+    await repo.putItem({
+      PK: `REG#${regId}`,
+      SK: `DISCLOSURE#${acceptance.disclosureId}`,
+      regId,
+      disclosureId: acceptance.disclosureId,
+      acceptedVersion: acceptance.version,
+      acceptedAt: now,
+    });
+  }
+}
+
+/** Shared details a minor registration inherits from its guardian. */
+interface MinorContext {
+  eventId: string;
+  eventName: string;
+  guardianId: string;
+  guardianName: string;
+  email: string;
+  phone: string;
+  emergencyName: string;
+  emergencyPhone: string;
+  emergencyRelation: string;
+  signature: string;
+  liabilityAccepted: boolean;
+  medicalAccepted: boolean;
+  paymentMethod: 'stripe' | 'zelle';
+  paymentIntentId: string;
+  totalPaid: number;
+  totalOwed: number;
+  paymentStatus: string;
+  zelleAmount: number;
+}
+
+/**
+ * Build a minor's registration item. A minor is its own registration linked to
+ * the guardian; we only collected the minor's name and DOB, so contact,
+ * emergency and legal details are inherited from the guardian.
+ */
+function buildMinorItem(
+  minor: MinorInput,
+  ctx: MinorContext,
+  now: string
+): Record<string, unknown> {
+  const minorId = randomBytes(4).toString('hex').toUpperCase();
+  const item: Record<string, unknown> = {
+    PK: `EVENT#${ctx.eventId}`,
+    SK: `REG#${minorId}`,
+    GSI1PK: `REG#${minorId}`,
+    GSI1SK: 'METADATA',
+    GSI2PK: `EMAIL#${ctx.email.toLowerCase().trim()}`,
+    GSI2SK: now,
+    id: minorId,
+    createdAt: now,
+    eventId: ctx.eventId,
+    eventName: ctx.eventName,
+    firstName: minor.firstName?.trim() ?? '',
+    lastName: minor.lastName?.trim() ?? '',
+    email: ctx.email,
+    phone: ctx.phone,
+    dob: minor.dob ?? '',
+    emergencyName: ctx.emergencyName,
+    emergencyPhone: ctx.emergencyPhone,
+    emergencyRelation: ctx.emergencyRelation,
+    skillLevel: '',
+    dietary: '',
+    medConditions: 'no',
+    conditionDetails: '',
+    medAllergies: 'no',
+    allergyDetails: '',
+    medMedications: 'no',
+    medicationDetails: '',
+    liabilityAccepted: ctx.liabilityAccepted,
+    medicalAccepted: ctx.medicalAccepted,
+    signature: ctx.signature,
+    paymentMethod: ctx.paymentMethod,
+    paymentIntentId: ctx.paymentIntentId,
+    totalPaid: ctx.totalPaid,
+    totalOwed: ctx.totalOwed,
+    paymentStatus: ctx.paymentStatus,
+    isMinor: true,
+    guardianRegId: ctx.guardianId,
+    guardianName: ctx.guardianName,
+  };
+  if (ctx.paymentMethod === 'zelle') {
+    item.zelleAmount = ctx.zelleAmount;
+  }
+  return item;
+}
+
+/**
+ * Add one or more minors to an existing (guardian) registration, charging only
+ * for the additional minors. Used by an already-registered parent who comes
+ * back to bring a child.
+ */
+export async function addMinorsToRegistration(
+  req: AddMinorsRequest
+): Promise<Record<string, unknown>> {
+  const isZelle = req.paymentMethod === 'zelle';
+
+  if (!req.guardianRegId) {
+    throw new BadRequestError('Missing guardian registration');
+  }
+  if (!isZelle && !req.paymentIntentId) {
+    throw new BadRequestError('Missing required fields');
+  }
+
+  const minors = (req.minors ?? []).filter(
+    (m) => m && (m.firstName?.trim() || m.lastName?.trim())
+  );
+  if (minors.length === 0) {
+    throw new BadRequestError('At least one minor is required');
+  }
+
+  // getRegistration throws NotFoundError if the guardian reg does not exist.
+  const guardian = await getRegistration(req.guardianRegId);
+  if (guardian.isMinor === true) {
+    throw new BadRequestError('Cannot add minors to a minor registration');
+  }
+
+  const eventId = guardian.eventId as string;
+  const event = await eventService.getEvent(eventId);
+  const price = (event.price as number) || 0;
+  const deposit = (event.deposit as number) || 0;
+  const baseAmount = req.partialPayment && deposit > 0 ? deposit : price;
+  const perPersonOwed = price;
+  const perPersonPaid = isZelle ? 0 : baseAmount;
+  const perPersonStatus = isZelle
+    ? 'pending'
+    : perPersonPaid >= perPersonOwed
+      ? 'paid'
+      : 'partial';
+
+  const now = new Date().toISOString();
+  const guardianName = `${guardian.firstName} ${guardian.lastName}`.trim();
+
+  // Each minor inherits the guardian's already-accepted disclosures.
+  const guardianAcceptances = await getRegistrationAcceptances(req.guardianRegId);
+  const acceptances = guardianAcceptances.map((a) => ({
+    disclosureId: a.disclosureId as string,
+    version: (a.acceptedVersion as number) ?? 0,
+  }));
+
+  const ctx: MinorContext = {
+    eventId,
+    eventName: event.name as string,
+    guardianId: req.guardianRegId,
+    guardianName,
+    email: guardian.email as string,
+    phone: (guardian.phone as string) ?? '',
+    emergencyName: (guardian.emergencyName as string) ?? '',
+    emergencyPhone: (guardian.emergencyPhone as string) ?? '',
+    emergencyRelation: (guardian.emergencyRelation as string) ?? '',
+    signature: (guardian.signature as string) ?? '',
+    liabilityAccepted: guardian.liabilityAccepted === true,
+    medicalAccepted: guardian.medicalAccepted === true,
+    paymentMethod: isZelle ? 'zelle' : 'stripe',
+    paymentIntentId: req.paymentIntentId ?? '',
+    totalPaid: perPersonPaid,
+    totalOwed: perPersonOwed,
+    paymentStatus: perPersonStatus,
+    zelleAmount: baseAmount,
+  };
+
+  for (const minor of minors) {
+    const item = buildMinorItem(minor, ctx, now);
+    // Best-effort spot reservation — the payment is already captured, so a late
+    // capacity miss must not discard a paid minor registration.
+    try {
+      await eventService.decrementSpotsLeft(eventId);
+    } catch (e) {
+      if (!(e instanceof BadRequestError)) throw e;
+    }
+    await repo.putItem(item);
+    await saveDisclosureAcceptances(item.id as string, acceptances, now);
+  }
+
+  const count = minors.length;
+  const groupPaid = perPersonPaid * count;
+  const groupZelle = baseAmount * count;
+
+  if (isZelle) {
+    await emailService.sendZellePendingEmail(
+      guardian.email as string,
+      guardianName,
+      event.name as string,
+      req.guardianRegId,
+      groupZelle
+    );
+  } else {
+    await emailService.sendConfirmationEmail(
+      guardian.email as string,
+      guardianName,
+      event.name as string,
+      req.guardianRegId,
+      groupPaid
+    );
+  }
+
+  await emailService.sendAdminNotificationEmail({
+    firstName: guardian.firstName as string,
+    lastName: guardian.lastName as string,
+    email: guardian.email as string,
+    phone: guardian.phone as string,
+    eventName: event.name as string,
+    confirmationId: req.guardianRegId,
+    paymentMethod: isZelle ? 'zelle' : 'stripe',
+    paymentStatus: perPersonStatus,
+    totalPaid: groupPaid,
+    totalOwed: perPersonOwed * count,
+    zelleAmount: isZelle ? groupZelle : undefined,
+  });
+
+  return { success: true, count, paymentStatus: perPersonStatus };
 }
 
 export async function listRegistrations(eventId?: string): Promise<Record<string, unknown>[]> {
@@ -404,6 +672,9 @@ function itemToRegistrationMap(item: Record<string, unknown>): Record<string, un
     attended: item.attended ?? false,
     attendanceMarkedAt: item.attendanceMarkedAt ?? '',
     attendanceMarkedBy: item.attendanceMarkedBy ?? '',
+    isMinor: item.isMinor ?? false,
+    guardianRegId: item.guardianRegId ?? '',
+    guardianName: item.guardianName ?? '',
     // Intentionally omit paymentIntentId
   };
 }

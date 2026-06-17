@@ -163,6 +163,7 @@ export interface AdminNotificationData {
   totalPaid: number;
   totalOwed: number;
   zelleAmount?: number;
+  headcount?: number;
 }
 
 export async function sendAdminNotificationEmail(reg: AdminNotificationData): Promise<void> {
@@ -181,6 +182,9 @@ export async function sendAdminNotificationEmail(reg: AdminNotificationData): Pr
     { label: 'Correo', value: reg.email },
   ];
   if (reg.phone) rows.push({ label: 'Teléfono', value: reg.phone });
+  if (reg.headcount && reg.headcount > 1) {
+    rows.push({ label: 'Participantes', value: `${reg.headcount} (incluye ${reg.headcount - 1} menor(es))` });
+  }
   rows.push({ label: 'Método', value: isZelle ? 'Zelle' : 'Tarjeta' });
   rows.push({ label: 'Estado', value: reg.paymentStatus });
   if (isZelle) {

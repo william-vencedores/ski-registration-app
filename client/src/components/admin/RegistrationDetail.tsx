@@ -150,6 +150,12 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                   <span className={`w-1.5 h-1.5 rounded-full ${reg.attended ? 'bg-[#7ddc9a]' : 'bg-glacier'}`} />
                   {reg.attended ? 'Attended' : 'Registered'}
                 </div>
+                {reg.isMinor && (
+                  <div className="px-3 py-1.5 rounded-full text-xs font-semibold
+                                  bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    👶 Minor
+                  </div>
+                )}
                 <div className="text-xs text-slate-500">
                   {new Date(reg.createdAt).toLocaleDateString('es-US', {
                     year: 'numeric', month: 'short', day: 'numeric',
@@ -226,6 +232,9 @@ export default function RegistrationDetail({ reg, onClose, onUpdate }: Props) {
                 <Row label="Email" value={reg.email} />
                 <Row label="Phone" value={reg.phone} />
                 <Row label="DOB" value={reg.dob} />
+                {reg.isMinor && reg.guardianName && (
+                  <Row label="Guardian" value={`${reg.guardianName} (#${reg.guardianRegId})`} />
+                )}
               </Section>
 
               <Section title="Emergency Contact">

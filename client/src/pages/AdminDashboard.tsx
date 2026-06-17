@@ -213,8 +213,15 @@ export default function AdminDashboard() {
 
                       {/* Name + email */}
                       <td className="px-4 py-3.5">
-                        <div className="font-medium text-white whitespace-nowrap">
+                        <div className="font-medium text-white whitespace-nowrap flex items-center gap-1.5">
                           {reg.firstName} {reg.lastName}
+                          {reg.isMinor && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded
+                                             bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                  title={reg.guardianName ? `Guardian: ${reg.guardianName}` : 'Minor'}>
+                              👶 Minor
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-slate-500">{reg.email}</div>
                       </td>

@@ -11,7 +11,8 @@ export async function createPaymentIntent(
   eventId: string,
   email: string,
   name: string,
-  partialPayment: boolean
+  partialPayment: boolean,
+  minorsCount: number = 0
 ): Promise<Record<string, unknown>> {
   const event = await eventService.getEvent(eventId);
 
@@ -24,14 +25,15 @@ export async function createPaymentIntent(
   const price = (event.price as number) || 0;
   const deposit = (event.deposit as number) || 0;
 
-  // Determine the base amount (deposit or full price)
+  // Determine the base amount per person (deposit or full price)
   const baseAmount = partialPayment && deposit > 0 ? deposit : price;
 
-  // The event price already covers card processing costs, so we charge the base
-  // amount with no added fee — card and Zelle cost the participant the same.
-  const chargeAmount = baseAmount;
+  // Headcount = the registrant plus any minors they bring; every head pays the
+  // same per-person price (no added processing fee — the event price covers it).
+  const headcount = 1 + Math.max(0, Math.floor(minorsCount));
+  const chargeAmount = baseAmount * headcount;
   const amountCents = Math.round(chargeAmount * 100);
-  const totalOwed = price;
+  const totalOwed = price * headcount;
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,
@@ -46,14 +48,69 @@ export async function createPaymentIntent(
       name,
       email,
       partialPayment: String(partialPayment),
+      headcount: String(headcount),
     },
-    description: `Vencedores Ski — ${event.name}${partialPayment && deposit > 0 ? ' (Deposit)' : ''}`,
+    description: `Vencedores Ski — ${event.name}${headcount > 1 ? ` (${headcount} participants)` : ''}${partialPayment && deposit > 0 ? ' (Deposit)' : ''}`,
   });
 
   return {
     clientSecret: paymentIntent.client_secret,
     chargeAmount,
     totalOwed,
+    headcount,
+  };
+}
+
+/**
+ * PaymentIntent for adding minors to an *existing* registration. The guardian
+ * is already registered (so the normal create-intent duplicate guard would
+ * block them); here we charge only for the additional minors.
+ */
+export async function createMinorsPaymentIntent(
+  guardianRegId: string,
+  minorsCount: number,
+  partialPayment: boolean
+): Promise<Record<string, unknown>> {
+  const count = Math.max(0, Math.floor(minorsCount));
+  if (count < 1) {
+    throw new BadRequestError('At least one minor is required');
+  }
+
+  const items = await repo.queryGsi('GSI1', 'GSI1PK', `REG#${guardianRegId}`, 'GSI1SK', null);
+  if (items.length === 0) {
+    throw new BadRequestError('Registration not found');
+  }
+  const guardian = items[0];
+  if (guardian.isMinor === true) {
+    throw new BadRequestError('Cannot add minors to a minor registration');
+  }
+
+  const eventId = guardian.eventId as string;
+  const event = await eventService.getEvent(eventId);
+  const price = (event.price as number) || 0;
+  const deposit = (event.deposit as number) || 0;
+  const baseAmount = partialPayment && deposit > 0 ? deposit : price;
+
+  const chargeAmount = baseAmount * count;
+  const amountCents = Math.round(chargeAmount * 100);
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amountCents,
+    currency: 'usd',
+    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+    metadata: {
+      guardianRegId,
+      eventId,
+      minorsOnly: 'true',
+      minorsCount: String(count),
+    },
+    description: `Vencedores Ski — ${event.name} (${count} minor${count > 1 ? 's' : ''})`,
+  });
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+    chargeAmount,
+    minorsCount: count,
   };
 }
 

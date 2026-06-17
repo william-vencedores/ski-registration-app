@@ -34,6 +34,11 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
     if (!formData.email.trim()) errors.email = t.required
     if (!formData.phone.trim()) errors.phone = t.required
     if (!formData.dob) errors.dob = t.required
+    formData.minors.forEach((m, i) => {
+      if (!m.firstName.trim()) errors[`minor${i}FirstName`] = t.required
+      if (!m.lastName.trim()) errors[`minor${i}LastName`] = t.required
+      if (!m.dob) errors[`minor${i}Dob`] = t.required
+    })
   }
   if (formStep === 1) {
     if (!formData.emergencyName.trim()) errors.emergencyName = t.required

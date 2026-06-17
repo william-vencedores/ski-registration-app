@@ -31,6 +31,9 @@ export interface Registration {
   attended?: boolean
   attendanceMarkedAt?: string
   attendanceMarkedBy?: string
+  isMinor?: boolean
+  guardianRegId?: string
+  guardianName?: string
 }
 
 export interface Stats {

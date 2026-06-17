@@ -73,6 +73,7 @@ function CardCheckout({ paymentType, hasDeposit, chargeTotal }: CardCheckoutProp
         email: formData.email,
         name: `${formData.firstName} ${formData.lastName}`,
         partialPayment: paymentType === 'deposit',
+        minors: formData.minors,
       })
 
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
@@ -97,8 +98,7 @@ function CardCheckout({ paymentType, hasDeposit, chargeTotal }: CardCheckoutProp
           eventId: selectedEvent.id,
           paymentMethod: 'stripe',
           paymentIntentId: paymentIntent.id,
-          totalPaid: data.chargeAmount,
-          totalOwed: data.totalOwed,
+          partialPayment: paymentType === 'deposit',
           disclosureAcceptances,
         })
 
@@ -161,22 +161,24 @@ export default function Step6Payment() {
 
   const hasDeposit = !!selectedEvent && (selectedEvent.deposit ?? 0) > 0
 
-  // Base amounts
+  // Headcount = the registrant plus any minors they bring. Every head pays the
+  // same per-person price. Must mirror the server calculation.
+  const headcount = 1 + formData.minors.length
+
+  // Per-person amounts
   const fullPrice = selectedEvent?.price ?? 0
   const depositPrice = selectedEvent?.deposit ?? 0
   const baseAmount = paymentType === 'deposit' && hasDeposit ? depositPrice : fullPrice
 
-  // The event price already covers processing, so no fee is added — card and
-  // Zelle cost the same. Must mirror the server calculation.
-  const chargeTotal = baseAmount
+  // Group amounts — the event price already covers processing, so no fee is added.
+  const chargeTotal = baseAmount * headcount
   const amountCents = Math.round(chargeTotal * 100)
 
-  // Remaining balance when paying only the deposit.
-  const remaining = paymentType === 'deposit' && hasDeposit ? fullPrice - chargeTotal : 0
+  // Remaining balance when paying only the deposit (across all participants).
+  const remaining = paymentType === 'deposit' && hasDeposit ? (fullPrice - baseAmount) * headcount : 0
 
   // Zelle: participant chooses the deposit or the full amount (same toggle as card).
-  // No processing fee is added, so the amount is simply the base price.
-  const zelleAmt = baseAmount
+  const zelleAmt = baseAmount * headcount
 
   const elementsOptions: StripeElementsOptions = {
     mode: 'payment',
@@ -200,13 +202,13 @@ export default function Step6Payment() {
         ...formData,
         eventId: selectedEvent.id,
         paymentMethod: 'zelle',
-        totalOwed: fullPrice,
+        partialPayment: paymentType === 'deposit',
         zelleAmount: amt,
         disclosureAcceptances,
       })
 
       setConfirmationId(data.confirmationId)
-      setPaymentInfo({ totalPaid: 0, totalOwed: fullPrice, method: 'zelle', zelleAmount: amt })
+      setPaymentInfo({ totalPaid: 0, totalOwed: fullPrice * headcount, method: 'zelle', zelleAmount: amt })
       setCurrentStep(7)
     } catch (err: any) {
       const msg = err?.response?.data?.error || err?.response?.data?.message || err?.message || 'An error occurred. Please try again.'
@@ -287,11 +289,17 @@ export default function Step6Payment() {
 
         {method === 'card' ? (
           <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
+            {headcount > 1 && (
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>{t.participants}</span>
+                <span>{headcount}</span>
+              </div>
+            )}
             {paymentType === 'deposit' && hasDeposit ? (
               <>
                 <div className="flex justify-between text-sm text-slate-600">
-                  <span>{t.deposit}</span>
-                  <span>${depositPrice.toFixed(2)}</span>
+                  <span>{t.deposit}{headcount > 1 ? ` × ${headcount}` : ''}</span>
+                  <span>${(depositPrice * headcount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
                   <span className="text-xs tracking-widest uppercase">{t.dueNow}</span>
@@ -305,8 +313,8 @@ export default function Step6Payment() {
             ) : (
               <>
                 <div className="flex justify-between text-sm text-slate-600">
-                  <span>{t.feeSkier}</span>
-                  <span>${fullPrice.toFixed(2)}</span>
+                  <span>{t.feeSkier}{headcount > 1 ? ` × ${headcount}` : ''}</span>
+                  <span>${(fullPrice * headcount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
                   <span className="text-xs tracking-widest uppercase">{t.feeTotal}</span>
@@ -317,8 +325,14 @@ export default function Step6Payment() {
           </div>
         ) : (
           <div className="bg-[#f8fbfe] px-5 py-3 flex flex-col gap-1.5">
+            {headcount > 1 && (
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>{t.participants}</span>
+                <span>{headcount}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-slate-600">
-              <span>{paymentType === 'deposit' && hasDeposit ? t.deposit : t.feeSkier}</span>
+              <span>{(paymentType === 'deposit' && hasDeposit ? t.deposit : t.feeSkier)}{headcount > 1 ? ` × ${headcount}` : ''}</span>
               <span>${zelleAmt.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-black/8">
@@ -328,7 +342,7 @@ export default function Step6Payment() {
             {paymentType === 'deposit' && hasDeposit && (
               <div className="flex justify-between text-xs text-amber-600 pt-1">
                 <span>{t.remainingBalance}</span>
-                <span>${(fullPrice - zelleAmt).toFixed(2)} USD</span>
+                <span>${(fullPrice * headcount - zelleAmt).toFixed(2)} USD</span>
               </div>
             )}
           </div>

@@ -33,6 +33,12 @@ export interface DisclosureAcceptance {
   version: number
 }
 
+export interface Minor {
+  firstName: string
+  lastName: string
+  dob: string
+}
+
 export interface FormData {
   // Step 1
   firstName: string
@@ -40,6 +46,8 @@ export interface FormData {
   email: string
   phone: string
   dob: string
+  // Minors the participant is bringing and paying for (parent/guardian flow)
+  minors: Minor[]
   // Step 2
   emergencyName: string
   emergencyPhone: string
@@ -62,6 +70,7 @@ export interface FormData {
 
 export const initialFormData: FormData = {
   firstName: '', lastName: '', email: '', phone: '', dob: '',
+  minors: [],
   emergencyName: '', emergencyPhone: '', emergencyRelation: '',
   skillLevel: '', dietary: '',
   medConditions: 'no', conditionDetails: '',

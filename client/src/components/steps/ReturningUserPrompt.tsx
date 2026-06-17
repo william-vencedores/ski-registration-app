@@ -5,6 +5,7 @@ import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { sendVerificationCode, verifyCode, createBalancePaymentIntent, payBalance } from '../../lib/returningApi'
 import type { RegistrationInfo } from '../../lib/returningApi'
+import AddMinorFlow from './AddMinorFlow'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? 'pk_test_REPLACE_ME')
 
@@ -169,7 +170,10 @@ export default function ReturningUserPrompt() {
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [returnedName, setReturnedName] = useState('')
   const [pendingRegistration, setPendingRegistration] = useState<RegistrationInfo | null>(null)
+  const [currentRegistration, setCurrentRegistration] = useState<RegistrationInfo | null>(null)
   const [balancePaid, setBalancePaid] = useState(false)
+  const [addingMinor, setAddingMinor] = useState(false)
+  const [minorAdded, setMinorAdded] = useState(false)
 
   const handleNew = () => {
     setIsReturningUser(false)
@@ -202,6 +206,7 @@ export default function ReturningUserPrompt() {
           setReturnedName(result.profile.firstName || '')
           // Check if there's a pending balance
           const reg = result.registrations?.find(r => r.eventId === selectedEvent.id)
+          if (reg) setCurrentRegistration(reg)
           if (reg && reg.paymentStatus === 'partial' && reg.totalOwed > reg.totalPaid) {
             setPendingRegistration(reg)
           }
@@ -227,7 +232,10 @@ export default function ReturningUserPrompt() {
   const handleReset = () => {
     setAlreadyRegistered(false)
     setPendingRegistration(null)
+    setCurrentRegistration(null)
     setBalancePaid(false)
+    setAddingMinor(false)
+    setMinorAdded(false)
     setPhase('choice')
     setCode('')
     setEmail('')
@@ -249,10 +257,48 @@ export default function ReturningUserPrompt() {
             <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
           )}
         </div>
+        {currentRegistration && (
+          <button type="button" onClick={() => { setBalancePaid(false); setAddingMinor(true) }} className="btn-primary w-full">
+            {t.addMinorCta}
+          </button>
+        )}
         <button type="button" onClick={handleReset} className="btn-ghost mx-auto">
           {t.back}
         </button>
       </div>
+    )
+  }
+
+  // Minor added success screen
+  if (minorAdded) {
+    return (
+      <div className="flex flex-col gap-5 text-center">
+        <div className="mb-2">
+          <div className="text-5xl mb-4">✅</div>
+          <h2 className="card-title">{t.addMinorSuccessTitle}</h2>
+          <p className="card-subtitle mt-2">{t.addMinorSuccess}</p>
+        </div>
+        <div className="bg-glacier/10 border border-glacier/20 rounded-xl px-4 py-3">
+          <p className="text-sm text-glacier font-semibold">{selectedEvent?.name}</p>
+          {selectedEvent?.date && (
+            <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
+          )}
+        </div>
+        <button type="button" onClick={handleReset} className="btn-ghost mx-auto">
+          {t.back}
+        </button>
+      </div>
+    )
+  }
+
+  // Add-a-minor flow for an already-registered parent
+  if (addingMinor && currentRegistration) {
+    return (
+      <AddMinorFlow
+        guardianRegId={currentRegistration.confirmationId}
+        onBack={() => setAddingMinor(false)}
+        onSuccess={() => { setAddingMinor(false); setMinorAdded(true) }}
+      />
     )
   }
 
@@ -295,6 +341,11 @@ export default function ReturningUserPrompt() {
             <p className="text-xs text-slate-400 mt-1">{selectedEvent.location} · {selectedEvent.date}</p>
           )}
         </div>
+        {currentRegistration && (
+          <button type="button" onClick={() => setAddingMinor(true)} className="btn-primary w-full">
+            {t.addMinorCta}
+          </button>
+        )}
         <button type="button" onClick={handleReset} className="btn-ghost mx-auto">
           {t.back}
         </button>

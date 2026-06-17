@@ -11,9 +11,9 @@ import {
   handleAttachDisclosure, handleDetachDisclosure,
 } from './handlers/events.js';
 // Registration handlers
-import { handleSubmit, handlePayBalance, handleCheckRegistration } from './handlers/registration.js';
+import { handleSubmit, handlePayBalance, handleCheckRegistration, handleAddMinors } from './handlers/registration.js';
 // Payment handlers
-import { handleCreateIntent, handleCreateBalanceIntent } from './handlers/payment.js';
+import { handleCreateIntent, handleCreateBalanceIntent, handleCreateMinorsIntent } from './handlers/payment.js';
 // Webhook handler
 import { handleWebhook } from './handlers/webhook.js';
 // Admin handlers
@@ -99,6 +99,9 @@ async function route(
   if (method === 'POST' && path === '/api/registration/pay-balance') {
     return handlePayBalance(event);
   }
+  if (method === 'POST' && path === '/api/registration/add-minors') {
+    return handleAddMinors(event);
+  }
 
   // ── Payment ────────────────────────────────────────────
   if (method === 'POST' && path === '/api/payment/create-intent') {
@@ -106,6 +109,9 @@ async function route(
   }
   if (method === 'POST' && path === '/api/payment/create-balance-intent') {
     return handleCreateBalanceIntent(event);
+  }
+  if (method === 'POST' && path === '/api/payment/create-minors-intent') {
+    return handleCreateMinorsIntent(event);
   }
 
   // ── Webhook ────────────────────────────────────────────

@@ -102,7 +102,12 @@ async function getLatestProfile(email: string) {
     ),
   ];
 
-  const registrations = items
+  // Minors are registered under their guardian's email but are not the account
+  // holder — exclude them so the prefilled profile and balance lookups use the
+  // adult's own registration.
+  const adultItems = items.filter((item) => item.isMinor !== true);
+
+  const registrations = adultItems
     .filter((item) => (item.eventId as string)?.length > 0)
     .map((item) => ({
       eventId: item.eventId ?? '',
@@ -112,8 +117,9 @@ async function getLatestProfile(email: string) {
       paymentStatus: item.paymentStatus ?? '',
     }));
 
-  // Get the most recent registration (last item, sorted by GSI2SK = createdAt)
-  const latest = items[items.length - 1];
+  // Get the most recent adult registration (last item, sorted by GSI2SK = createdAt)
+  const profileSource = adultItems.length > 0 ? adultItems : items;
+  const latest = profileSource[profileSource.length - 1];
 
   const profile = {
     firstName: latest.firstName ?? '',
