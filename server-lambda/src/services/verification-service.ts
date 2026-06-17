@@ -1,11 +1,15 @@
 import * as repo from '../repository/dynamo-repository.js';
 import * as emailService from './email-service.js';
+import { isValidEmail } from '../utils/validation.js';
 
 const CODE_EXPIRY_SECONDS = 600; // 10 minutes
 const MAX_ATTEMPTS = 5;
 const MAX_SENDS = 3;
 
 export async function sendVerificationCode(email: string): Promise<void> {
+  // Silently ignore malformed addresses (no send, no enumeration signal).
+  if (!isValidEmail(email)) return;
+
   const normalizedEmail = email.toLowerCase().trim();
   const pk = `VERIFY#${normalizedEmail}`;
   const sk = 'CODE';

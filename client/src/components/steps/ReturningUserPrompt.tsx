@@ -6,6 +6,7 @@ import { useTranslation } from '../../hooks/useTranslation'
 import { sendVerificationCode, verifyCode, createBalancePaymentIntent, payBalance } from '../../lib/returningApi'
 import type { RegistrationInfo } from '../../lib/returningApi'
 import AddMinorFlow from './AddMinorFlow'
+import { isValidEmail } from '../../lib/email'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? 'pk_test_REPLACE_ME')
 
@@ -182,6 +183,7 @@ export default function ReturningUserPrompt() {
 
   const handleSendCode = async () => {
     if (!email.trim()) return
+    if (!isValidEmail(email.trim())) { setError(t.invalidEmail); return }
     setLoading(true)
     setError('')
     try {

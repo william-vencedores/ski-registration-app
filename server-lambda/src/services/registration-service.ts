@@ -3,6 +3,7 @@ import * as repo from '../repository/dynamo-repository.js';
 import * as eventService from './event-service.js';
 import * as emailService from './email-service.js';
 import { BadRequestError, NotFoundError } from '../middleware/error-handler.js';
+import { isValidEmail } from '../utils/validation.js';
 import type { SubmitRegistrationRequest, AddMinorsRequest, MinorInput } from '../types/requests.js';
 
 /** True if this email already has a registration for the given event. */
@@ -19,6 +20,9 @@ export async function submitRegistration(
 
   if (!req.firstName || !req.lastName || !req.email || !req.eventId) {
     throw new BadRequestError('Missing required fields');
+  }
+  if (!isValidEmail(req.email)) {
+    throw new BadRequestError('A valid email address is required');
   }
   if (!isZelle && !req.paymentIntentId) {
     throw new BadRequestError('Missing required fields');

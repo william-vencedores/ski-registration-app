@@ -117,6 +117,7 @@ export const translations = {
     // Validation
     required: 'Este campo es requerido',
     invalidPhone: 'Ingresa un número de teléfono válido',
+    invalidEmail: 'Ingresa un correo electrónico válido',
     alreadyRegisteredError: 'Este correo ya está registrado para este evento.',
     acceptBoth: 'Debes aceptar ambos documentos',
     signRequired: 'Tu firma digital es requerida',
@@ -261,6 +262,7 @@ export const translations = {
     back: '← Back', next: 'Next →',
     required: 'This field is required',
     invalidPhone: 'Enter a valid phone number',
+    invalidEmail: 'Enter a valid email address',
     alreadyRegisteredError: 'This email is already registered for this event.',
     acceptBoth: 'You must accept both documents',
     signRequired: 'Your digital signature is required',

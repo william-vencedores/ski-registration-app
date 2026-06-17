@@ -5,6 +5,7 @@ import { useTranslation } from '../../hooks/useTranslation'
 import type { FormData } from '../../lib/events'
 import { checkRegistration } from '../../lib/events'
 import { isValidPhone } from '../../lib/phone'
+import { isValidEmail } from '../../lib/email'
 import StepProgress from '../ui/StepProgress'
 import ReturningUserPrompt from './ReturningUserPrompt'
 import Step1Personal from './Step1Personal'
@@ -33,6 +34,7 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
     if (!formData.firstName.trim()) errors.firstName = t.required
     if (!formData.lastName.trim()) errors.lastName = t.required
     if (!formData.email.trim()) errors.email = t.required
+    else if (!isValidEmail(formData.email)) errors.email = t.invalidEmail
     if (!formData.phone.trim()) errors.phone = t.required
     else if (!isValidPhone(formData.phone)) errors.phone = t.invalidPhone
     if (!formData.dob) errors.dob = t.required
