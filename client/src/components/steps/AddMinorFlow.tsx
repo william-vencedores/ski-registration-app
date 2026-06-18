@@ -5,7 +5,9 @@ import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { zelleConfig } from '../../lib/config'
 import { createMinorsPaymentIntent, addMinors } from '../../lib/returningApi'
-import type { Minor } from '../../lib/events'
+import { useEventDisclosures, type Minor } from '../../lib/events'
+
+type Acceptance = { disclosureId: string; version: number }
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? 'pk_test_REPLACE_ME')
 
@@ -42,12 +44,16 @@ function MinorCardCheckout({
   minors,
   partialPayment,
   chargeTotal,
+  acceptances,
+  waiversAccepted,
   onSuccess,
 }: {
   guardianRegId: string
   minors: Minor[]
   partialPayment: boolean
   chargeTotal: number
+  acceptances: Acceptance[]
+  waiversAccepted: boolean
   onSuccess: () => void
 }) {
   const stripe = useStripe()
@@ -59,6 +65,7 @@ function MinorCardCheckout({
   const handlePay = async () => {
     if (!stripe || !elements) return
     if (!minorsValid(minors)) { setError(t.addMinorNeedOne); return }
+    if (!waiversAccepted) { setError(t.acceptWaivers); return }
     setLoading(true)
     setError('')
 
@@ -92,6 +99,7 @@ function MinorCardCheckout({
           paymentMethod: 'stripe',
           paymentIntentId: paymentIntent.id,
           partialPayment,
+          disclosureAcceptances: acceptances,
         })
         onSuccess()
       }
@@ -115,7 +123,7 @@ function MinorCardCheckout({
       <button
         type="button"
         onClick={handlePay}
-        disabled={loading || !stripe || !minorsValid(minors)}
+        disabled={loading || !stripe || !minorsValid(minors) || !waiversAccepted}
         className="btn-success w-full text-center justify-center py-4 mt-4 disabled:opacity-60"
       >
         {loading ? (
@@ -132,15 +140,28 @@ function MinorCardCheckout({
 }
 
 export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props) {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const { selectedEvent } = useAppStore()
   const [minors, setMinors] = useState<Minor[]>([{ firstName: '', lastName: '', dob: '' }])
   const [method, setMethod] = useState<'card' | 'zelle'>('card')
   const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { disclosures } = useEventDisclosures(selectedEvent?.id)
+  const [accepted, setAccepted] = useState<Record<string, boolean>>({})
 
   if (!selectedEvent) return null
+
+  // Only minor-audience waivers are surfaced here — the guardian already
+  // accepted the standard disclosures when they first registered.
+  const minorDisclosures = disclosures.filter((d) => d.audience === 'minors')
+  const waiversAccepted = minorDisclosures
+    .filter((d) => d.required)
+    .every((d) => accepted[d.id])
+  const acceptances: Acceptance[] = minorDisclosures
+    .filter((d) => accepted[d.id])
+    .map((d) => ({ disclosureId: d.id, version: d.version }))
+  const toggleWaiver = (id: string) => setAccepted((p) => ({ ...p, [id]: !p[id] }))
 
   const hasDeposit = (selectedEvent.deposit ?? 0) > 0
   const fullPrice = selectedEvent.price ?? 0
@@ -158,6 +179,7 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
 
   const handleZelleSubmit = async () => {
     if (!minorsValid(minors)) { setError(t.addMinorNeedOne); return }
+    if (!waiversAccepted) { setError(t.acceptWaivers); return }
     setLoading(true)
     setError('')
     try {
@@ -167,6 +189,7 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
         paymentMethod: 'zelle',
         partialPayment: paymentType === 'deposit',
         zelleAmount: chargeTotal,
+        disclosureAcceptances: acceptances,
       })
       onSuccess()
     } catch (err: any) {
@@ -237,6 +260,34 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
           {t.addMinor}
         </button>
       </div>
+
+      {/* Minor waivers — must be accepted before payment */}
+      {minorDisclosures.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {minorDisclosures.map((d) => (
+            <div key={d.id} className="rounded-xl border border-black/8 bg-[#f8fbfe] overflow-hidden">
+              <div className="px-4 py-3 border-b border-black/8 font-semibold text-sm text-slate-800">
+                {lang === 'es' ? d.titleEs : d.titleEn}
+              </div>
+              <div
+                className="px-4 py-3 text-xs text-slate-600 max-h-40 overflow-y-auto leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: lang === 'es' ? d.contentEs : d.contentEn }}
+              />
+              <label className="flex items-center gap-2 px-4 py-3 border-t border-black/8 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!accepted[d.id]}
+                  onChange={() => toggleWaiver(d.id)}
+                  className="w-4 h-4 rounded accent-deep-sky cursor-pointer"
+                />
+                <span className="text-xs text-slate-600">
+                  {lang === 'es' ? 'He leído y acepto' : 'I have read and accept'}
+                </span>
+              </label>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Payment method selector */}
       <div>
@@ -318,6 +369,8 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
             minors={minors}
             partialPayment={paymentType === 'deposit'}
             chargeTotal={chargeTotal}
+            acceptances={acceptances}
+            waiversAccepted={waiversAccepted}
             onSuccess={onSuccess}
           />
         </Elements>
@@ -348,7 +401,7 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
           <button
             type="button"
             onClick={handleZelleSubmit}
-            disabled={loading || !minorsValid(minors)}
+            disabled={loading || !minorsValid(minors) || !waiversAccepted}
             className="btn-success w-full text-center justify-center py-4 disabled:opacity-60"
           >
             {loading ? (

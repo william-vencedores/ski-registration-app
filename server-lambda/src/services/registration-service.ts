@@ -368,12 +368,42 @@ export async function addMinorsToRegistration(
   const now = new Date().toISOString();
   const guardianName = `${guardian.firstName} ${guardian.lastName}`.trim();
 
-  // Each minor inherits the guardian's already-accepted disclosures.
+  // Adding a minor requires accepting any minor-audience disclosure the event
+  // marks as required — even if the guardian originally registered alone and so
+  // never saw it. Enforced server-side as a backstop to the client check.
+  const eventDisclosures = await disclosureService.getEventDisclosures(eventId);
+  const submitted = req.disclosureAcceptances ?? [];
+  const missing = eventDisclosures.filter(
+    (d) =>
+      d.audience === 'minors' &&
+      d.required === true &&
+      !submitted.some((a) => a.disclosureId === d.id && a.version === d.version)
+  );
+  if (missing.length > 0) {
+    throw new BadRequestError(
+      'Additional minor waiver(s) must be accepted when registering a minor.'
+    );
+  }
+
+  // The new minor records inherit the guardian's already-accepted disclosures,
+  // merged with the ones just accepted in this flow (minor takes precedence).
   const guardianAcceptances = await getRegistrationAcceptances(req.guardianRegId);
-  const acceptances = guardianAcceptances.map((a) => ({
-    disclosureId: a.disclosureId as string,
-    version: (a.acceptedVersion as number) ?? 0,
-  }));
+  const newAcceptances = submitted.filter((a) =>
+    eventDisclosures.some((d) => d.id === a.disclosureId)
+  );
+  const merged = new Map<string, { disclosureId: string; version: number }>();
+  for (const a of guardianAcceptances) {
+    merged.set(a.disclosureId as string, {
+      disclosureId: a.disclosureId as string,
+      version: (a.acceptedVersion as number) ?? 0,
+    });
+  }
+  for (const a of newAcceptances) merged.set(a.disclosureId, a);
+  const acceptances = Array.from(merged.values());
+
+  // Record the newly-accepted waivers on the guardian too, since the guardian
+  // is the one signing on the minor's behalf.
+  await saveDisclosureAcceptances(req.guardianRegId, newAcceptances, now);
 
   const ctx: MinorContext = {
     eventId,

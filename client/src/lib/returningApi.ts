@@ -72,6 +72,7 @@ export async function addMinors(payload: {
   paymentIntentId?: string
   partialPayment?: boolean
   zelleAmount?: number
+  disclosureAcceptances?: { disclosureId: string; version: number }[]
 }) {
   const res = await axios.post('/api/registration/add-minors', payload)
   return res.data as { success: boolean; count: number; paymentStatus: string }

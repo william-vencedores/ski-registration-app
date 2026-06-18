@@ -74,6 +74,7 @@ export interface AddMinorsRequest {
   paymentIntentId?: string;
   partialPayment?: boolean;
   zelleAmount?: number;
+  disclosureAcceptances?: DisclosureAcceptanceInput[];
 }
 
 export interface DisclosureAcceptanceInput {
