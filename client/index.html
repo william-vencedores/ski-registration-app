@@ -3,7 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vencedores Ski – Registro / Registration</title>
+
+    <!-- Primary SEO -->
+    <title>Vencedores – Grupo de Ski Cristiano | Registro</title>
+    <meta
+      name="description"
+      content="Vencedores: únete a nuestro grupo cristiano de ski y snowboard. Regístrate en línea para nuestros viajes a la nieve — comunidad, fe y aventura en la montaña. Join our Christian ski & snowboard group and register online."
+    />
+    <meta
+      name="keywords"
+      content="Vencedores, grupo de ski cristiano, ski cristiano, snowboard, viaje de ski, registro de ski, Christian ski group, ski trip registration, ski group"
+    />
+    <meta name="author" content="Vencedores" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.vencedores.net/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Vencedores" />
+    <meta property="og:title" content="Vencedores – Grupo de Ski Cristiano" />
+    <meta
+      property="og:description"
+      content="Únete a nuestro grupo cristiano de ski y snowboard. Regístrate en línea para nuestros viajes a la nieve. Join our Christian ski & snowboard group."
+    />
+    <meta property="og:url" content="https://www.vencedores.net/" />
+    <meta property="og:image" content="https://www.vencedores.net/og-image.jpg" />
+    <meta property="og:image:alt" content="El grupo Vencedores en la montaña" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vencedores – Grupo de Ski Cristiano" />
+    <meta
+      name="twitter:description"
+      content="Únete a nuestro grupo cristiano de ski y snowboard. Regístrate en línea para nuestros viajes a la nieve."
+    />
+    <meta name="twitter:image" content="https://www.vencedores.net/og-image.jpg" />
+
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -23,9 +60,33 @@
         }
       })();
     </script>
+
+    <!-- Structured data: organization / sports club -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SportsActivityLocation",
+        "name": "Vencedores",
+        "alternateName": "Vencedores Ski",
+        "description": "Grupo cristiano de ski y snowboard. Christian ski and snowboard group organizing recreational mountain trips.",
+        "url": "https://www.vencedores.net/",
+        "image": "https://www.vencedores.net/og-image.jpg",
+        "logo": "https://www.vencedores.net/favicon-512.png",
+        "sport": ["Skiing", "Snowboarding"]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>Vencedores — Grupo de Ski Cristiano</h1>
+      <p>
+        Únete a nuestro grupo cristiano de ski y snowboard y regístrate en línea
+        para nuestros viajes a la nieve. Join our Christian ski and snowboard
+        group and register online for our mountain trips.
+      </p>
+      <p>Activa JavaScript para completar tu registro. Please enable JavaScript to register.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

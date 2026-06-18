@@ -1,6 +1,10 @@
 {
-  "name": "Vencedores Ski",
+  "name": "Vencedores",
   "short_name": "Vencedores",
+  "description": "Grupo cristiano de ski y snowboard — registro en línea.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png" }
