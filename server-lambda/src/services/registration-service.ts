@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto';
 import * as repo from '../repository/dynamo-repository.js';
 import * as eventService from './event-service.js';
 import * as emailService from './email-service.js';
+import * as disclosureService from './disclosure-service.js';
 import { BadRequestError, NotFoundError } from '../middleware/error-handler.js';
 import { isValidEmail } from '../utils/validation.js';
 import type { SubmitRegistrationRequest, AddMinorsRequest, MinorInput } from '../types/requests.js';
@@ -55,6 +56,25 @@ export async function submitRegistration(
     (m) => m && (m.firstName?.trim() || m.lastName?.trim())
   );
   const headcount = 1 + minors.length;
+
+  // When a minor is being registered, every minor-audience disclosure marked
+  // required for this event must be accepted (one guardian acceptance covers all
+  // minors). Enforced server-side so the client check can't be bypassed.
+  if (minors.length > 0) {
+    const eventDisclosures = await disclosureService.getEventDisclosures(req.eventId);
+    const accepted = req.disclosureAcceptances ?? [];
+    const missing = eventDisclosures.filter(
+      (d) =>
+        d.audience === 'minors' &&
+        d.required === true &&
+        !accepted.some((a) => a.disclosureId === d.id && a.version === d.version)
+    );
+    if (missing.length > 0) {
+      throw new BadRequestError(
+        'Additional minor waiver(s) must be accepted when registering a minor.'
+      );
+    }
+  }
 
   const now = new Date().toISOString();
   const guardianId = isZelle

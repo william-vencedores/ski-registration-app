@@ -157,6 +157,7 @@ export const translations = {
     yourRegistration: 'Tu registro',
     amountPaid: 'Pagado',
     minorBadge: 'Menor',
+    minorWaiverHint: 'Requerido porque estás registrando a un menor',
   },
   en: {
     headerSub: 'Ski Group · Registration 2027',
@@ -305,6 +306,7 @@ export const translations = {
     yourRegistration: 'Your registration',
     amountPaid: 'Paid',
     minorBadge: 'Minor',
+    minorWaiverHint: 'Required because you are registering a minor',
   },
 } as const
 

@@ -10,7 +10,11 @@ interface Props {
 export default function Step5Documents({ errors }: Props) {
   const { formData, setFormData, selectedEvent, disclosureAcceptances, setDisclosureAcceptances } = useAppStore()
   const { t, lang } = useTranslation()
-  const { disclosures, loading } = useEventDisclosures(selectedEvent?.id)
+  const { disclosures: allDisclosures, loading } = useEventDisclosures(selectedEvent?.id)
+
+  // Minor-audience disclosures only apply when the registrant is bringing a minor.
+  const hasMinors = formData.minors.length > 0
+  const disclosures = allDisclosures.filter((d) => d.audience !== 'minors' || hasMinors)
 
   // Track which disclosures are accepted locally
   const [accepted, setAccepted] = useState<Record<string, boolean>>({})
@@ -23,7 +27,8 @@ export default function Step5Documents({ errors }: Props) {
       initial[d.id] = !!existing
     })
     setAccepted(initial)
-  }, [disclosures, disclosureAcceptances])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDisclosures, hasMinors, disclosureAcceptances])
 
   const toggleAcceptance = (disclosure: Disclosure) => {
     const isNowAccepted = !accepted[disclosure.id]
@@ -70,6 +75,11 @@ export default function Step5Documents({ errors }: Props) {
           <div className="waiver-header">
             <span>{lang === 'es' ? disclosure.titleEs : disclosure.titleEn}</span>
           </div>
+          {disclosure.audience === 'minors' && (
+            <p className="px-3 pt-2 text-[11px] font-medium text-deep-sky">
+              {t.minorWaiverHint}
+            </p>
+          )}
           <div
             className="waiver-body"
             dangerouslySetInnerHTML={{

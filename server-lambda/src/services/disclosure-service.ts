@@ -7,6 +7,7 @@ export async function createDisclosure(req: CreateDisclosureRequest): Promise<Re
   const id = uuidv4().substring(0, 8);
   const now = new Date().toISOString();
   const version = 1;
+  const audience = req.audience ?? 'all';
 
   // Write version record
   const versionItem: Record<string, unknown> = {
@@ -19,6 +20,7 @@ export async function createDisclosure(req: CreateDisclosureRequest): Promise<Re
     contentEs: req.contentEs,
     contentEn: req.contentEn,
     required: req.required,
+    audience,
     createdAt: now,
   };
   await repo.putItem(versionItem);
@@ -32,6 +34,7 @@ export async function createDisclosure(req: CreateDisclosureRequest): Promise<Re
     titleEs: req.titleEs,
     titleEn: req.titleEn,
     required: req.required,
+    audience,
     createdAt: now,
   };
   await repo.putItem(latestItem);
@@ -50,6 +53,7 @@ export async function updateDisclosure(
 
   const newVersion = ((latest.latestVersion as number) || 0) + 1;
   const now = new Date().toISOString();
+  const audience = req.audience ?? 'all';
 
   // Write new version
   const versionItem: Record<string, unknown> = {
@@ -62,6 +66,7 @@ export async function updateDisclosure(
     contentEs: req.contentEs,
     contentEn: req.contentEn,
     required: req.required,
+    audience,
     createdAt: now,
   };
   await repo.putItem(versionItem);
@@ -70,12 +75,13 @@ export async function updateDisclosure(
   await repo.updateItem(
     `DISCLOSURE#${id}`,
     'LATEST',
-    'SET latestVersion = :v, titleEs = :tEs, titleEn = :tEn, #req = :req',
+    'SET latestVersion = :v, titleEs = :tEs, titleEn = :tEn, #req = :req, audience = :aud',
     {
       ':v': newVersion,
       ':tEs': req.titleEs,
       ':tEn': req.titleEn,
       ':req': req.required,
+      ':aud': audience,
     },
     { '#req': 'required' }
   );
@@ -188,6 +194,7 @@ function itemToDisclosureMap(item: Record<string, unknown>): Record<string, unkn
     contentEs: item.contentEs ?? '',
     contentEn: item.contentEn ?? '',
     required: item.required ?? false,
+    audience: item.audience ?? 'all',
     createdAt: item.createdAt ?? '',
   };
 }

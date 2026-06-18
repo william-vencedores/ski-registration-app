@@ -21,10 +21,11 @@ interface EditingDisclosure {
   contentEs: string
   contentEn: string
   required: boolean
+  audience: 'all' | 'minors'
 }
 
 const emptyDisclosure: EditingDisclosure = {
-  titleEs: '', titleEn: '', contentEs: '', contentEn: '', required: true,
+  titleEs: '', titleEn: '', contentEs: '', contentEn: '', required: true, audience: 'all',
 }
 
 export default function AdminDisclosures() {
@@ -54,6 +55,7 @@ export default function AdminDisclosures() {
       contentEs: d.contentEs,
       contentEn: d.contentEn,
       required: d.required,
+      audience: d.audience ?? 'all',
     })
     setIsNew(false); setError(''); setPreviewLang(null)
   }
@@ -252,6 +254,11 @@ export default function AdminDisclosures() {
                           Optional
                         </span>
                       )}
+                      {d.audience === 'minors' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-glacier/20 text-glacier border border-glacier/30">
+                          Minors only
+                        </span>
+                      )}
                     </div>
                     {d.titleEs && d.titleEn && (
                       <div className="text-xs text-slate-500 mt-0.5">ES: {d.titleEs}</div>
@@ -397,6 +404,30 @@ export default function AdminDisclosures() {
                 <label className="text-sm text-slate-300">
                   Required {editing.required ? '— participants must accept this' : '— optional waiver'}
                 </label>
+              </div>
+
+              {/* Audience */}
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Applies to</label>
+                <div className="flex gap-2 mt-1">
+                  {([
+                    { val: 'all' as const, label: 'All participants' },
+                    { val: 'minors' as const, label: 'Minors only' },
+                  ]).map((opt) => (
+                    <button key={opt.val}
+                      type="button"
+                      onClick={() => setEditing((prev) => prev ? { ...prev, audience: opt.val } : prev)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all
+                        ${editing.audience === opt.val
+                          ? 'bg-glacier/20 text-glacier border-glacier/40'
+                          : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  "Minors only" waivers are shown and required only when the registrant is bringing a minor.
+                </p>
               </div>
             </div>
 

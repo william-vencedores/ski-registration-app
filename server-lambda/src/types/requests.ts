@@ -87,6 +87,9 @@ export interface CreateDisclosureRequest {
   contentEs: string;
   contentEn: string;
   required: boolean;
+  // Who the disclosure applies to. 'all' (default) shows it to every registrant;
+  // 'minors' only requires it when the registrant is bringing a minor.
+  audience?: 'all' | 'minors';
 }
 
 export interface CreateAdminUserRequest {

@@ -25,6 +25,9 @@ export interface Disclosure {
   contentEs: string
   contentEn: string
   required: boolean
+  // 'all' (default) shows the disclosure to everyone; 'minors' only applies when
+  // the registrant is bringing a minor.
+  audience?: 'all' | 'minors'
   displayOrder?: number
 }
 
