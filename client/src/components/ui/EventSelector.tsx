@@ -35,6 +35,13 @@ export default function EventSelector() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // On open, bring the selector up near the top so the options list is
+  // visible without scrolling — especially important on mobile, where the
+  // selector otherwise sits low and the list opens below the fold.
+  useEffect(() => {
+    if (open) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [open])
+
   const handleSelect = (ev: SkiEvent) => {
     setSelectedEvent(ev)
     setOpen(false)
@@ -52,7 +59,7 @@ export default function EventSelector() {
       <p className="text-center text-[11px] tracking-[3px] uppercase text-glacier mb-3">
         {t.evSelectorLabel}
       </p>
-      <div ref={ref} className="relative max-w-xl mx-auto">
+      <div ref={ref} className="relative max-w-xl mx-auto scroll-mt-24">
         {/* Trigger */}
         <button
           onClick={() => setOpen((o) => !o)}
@@ -88,7 +95,7 @@ export default function EventSelector() {
           <div className="absolute top-full left-0 right-0 z-50 animate-slide-down
             bg-[rgba(8,20,38,0.97)] backdrop-blur-2xl
             border-[1.5px] border-t-0 border-glacier/40
-            rounded-b-2xl overflow-hidden
+            rounded-b-2xl overflow-y-auto max-h-[60vh]
             shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
             {events.map((ev) => (
               <button
