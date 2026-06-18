@@ -2,7 +2,7 @@ export type Lang = 'es' | 'en'
 
 export const translations = {
   es: {
-    headerSub: 'Ski Group · Registro 2027',
+    headerSub: 'Ski Group',
     heroVerse: '"Todo lo puedo en Cristo que me fortalece" — Filipenses 4:13',
     heroTitle: 'EN LA NIEVE',
     heroTagline: 'Con fe en la cima · With faith at the summit',
@@ -160,7 +160,7 @@ export const translations = {
     minorWaiverHint: 'Requerido porque estás registrando a un menor',
   },
   en: {
-    headerSub: 'Ski Group · Registration 2027',
+    headerSub: 'Ski Group',
     heroVerse: '"I can do all things through Christ who strengthens me" — Philippians 4:13',
     heroTitle: 'ON THE SNOW',
     heroTagline: 'With faith at the summit',

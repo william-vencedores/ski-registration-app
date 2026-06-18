@@ -1,4 +1,3 @@
-import logo from '../../assets/logo.jpeg'
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import type { Lang } from '../../lib/i18n'
@@ -9,17 +8,21 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 flex justify-between items-center px-8 py-4 border-b border-white/10 backdrop-blur-xl bg-midnight/55">
-      <div className="flex items-center gap-3.5">
-        <img
-          src={logo}
-          alt="Vencedores"
-          className="w-12 h-12 rounded-full object-cover shadow-[0_0_20px_rgba(232,184,75,0.4)] flex-shrink-0"
-        />
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex items-center justify-center w-10 h-10 rounded-full text-xl flex-shrink-0
+                     bg-white/10 ring-1 ring-white/15
+                     shadow-[0_0_18px_rgba(232,184,75,0.35)]
+                     transition-transform duration-200 hover:scale-110 hover:-rotate-12"
+        >
+          ⛷️
+        </span>
         <div className="leading-none">
           <div className="font-cinzel text-xl tracking-[3px] font-bold text-white">
             VENCEDORES
           </div>
-          <div className="text-[10px] tracking-[2px] uppercase text-glacier mt-0.5">
+          <div className="font-cinzel text-[10px] tracking-[3px] uppercase text-glacier mt-0.5">
             {t.headerSub}
           </div>
         </div>
