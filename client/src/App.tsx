@@ -3,6 +3,7 @@ import Background from './components/layout/Background'
 import Header from './components/layout/Header'
 import Hero from './components/layout/Hero'
 import Gallery from './components/layout/Gallery'
+import Footer from './components/layout/Footer'
 import EventSelector from './components/ui/EventSelector'
 import RegistrationForm from './components/steps/RegistrationForm'
 import AdminLogin from './pages/AdminLogin'
@@ -46,6 +47,7 @@ function PublicSite() {
           <Gallery />
           <EventSelector />
         </main>
+        <Footer />
       </div>
 
       {/* Registration opens as a centered modal so it can't be missed */}

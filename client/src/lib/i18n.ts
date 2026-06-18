@@ -3,6 +3,8 @@ export type Lang = 'es' | 'en'
 export const translations = {
   es: {
     headerSub: 'Ski Group',
+    rights: 'Todos los derechos reservados.',
+    followUs: 'Síguenos',
     heroVerse: '"Todo lo puedo en Cristo que me fortalece" — Filipenses 4:13',
     heroTitle: 'EN LA NIEVE',
     heroTagline: 'Con fe en la cima · With faith at the summit',
@@ -162,6 +164,8 @@ export const translations = {
   },
   en: {
     headerSub: 'Ski Group',
+    rights: 'All rights reserved.',
+    followUs: 'Follow us',
     heroVerse: '"I can do all things through Christ who strengthens me" — Philippians 4:13',
     heroTitle: 'ON THE SNOW',
     heroTagline: 'With faith at the summit',
