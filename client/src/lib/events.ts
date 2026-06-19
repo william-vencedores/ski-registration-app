@@ -15,6 +15,12 @@ export interface SkiEvent {
   capacity?: number
   spotsLeft?: number
   deposit?: number
+  // Optional per-event override for the "what's included" list shown at checkout.
+  // One item per line; when empty, the default translated list is used.
+  costIncludes?: string
+  // Optional per-event override for the "additional costs (not included)" list
+  // shown at checkout. One item per line; when empty, the default list is used.
+  costExtra?: string
 }
 
 export interface Disclosure {
@@ -40,6 +46,23 @@ export interface Minor {
   firstName: string
   lastName: string
   dob: string
+  // Medical info collected per minor — mirrors the guardian's medical questions
+  // so each child's conditions, allergies and medications are on record.
+  medConditions: 'yes' | 'no'
+  conditionDetails: string
+  medAllergies: 'yes' | 'no'
+  allergyDetails: string
+  medMedications: 'yes' | 'no'
+  medicationDetails: string
+}
+
+// A blank minor — use this when adding a new minor row so the medical defaults
+// stay in sync everywhere a minor is created.
+export const emptyMinor: Minor = {
+  firstName: '', lastName: '', dob: '',
+  medConditions: 'no', conditionDetails: '',
+  medAllergies: 'no', allergyDetails: '',
+  medMedications: 'no', medicationDetails: '',
 }
 
 export interface FormData {

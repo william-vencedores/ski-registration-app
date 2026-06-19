@@ -73,6 +73,23 @@ export const translations = {
     s6Title: 'CUOTA DE INSCRIPCIÓN',
     s6Sub: 'Último paso — ¡estás casi listo!',
     s6Verse: '"Den generosamente y recibirán generosamente." — Lucas 6:38',
+    // What the registration fee covers (default list; an event can override it)
+    costTitle: 'Tu cuota lo incluye todo',
+    costSub: 'Todo lo siguiente ya está cubierto en el precio:',
+    costItems: [
+      { icon: '🚐', label: 'Transporte ida y vuelta' },
+      { icon: '🏨', label: 'Hospedaje' },
+      { icon: '🍽️', label: 'Todas las comidas' },
+      { icon: '🥐', label: 'Desayuno camino al evento' },
+      { icon: '🍝', label: 'Cena de regreso a casa' },
+    ],
+    // Costs NOT included in the fee — paid separately at the mountain
+    costExtraTitle: 'Costos adicionales (no incluidos)',
+    costExtraSub: 'Estos se pagan aparte, directamente en la montaña:',
+    costExtraItems: [
+      { icon: '🎟️', label: 'Boleto de telesilla (lift) — aprox. $130 por día' },
+      { icon: '🎿', label: 'Renta de equipo (esquís o snowboard) — aprox. $50 por día' },
+    ],
     feeSkier: 'Cuota de esquiador',
     feeProcessing: 'Cargo de procesamiento',
     feeTotal: 'TOTAL',
@@ -228,6 +245,23 @@ export const translations = {
     s6Title: 'REGISTRATION FEE',
     s6Sub: "Last step — you're almost there!",
     s6Verse: '"Give generously and you will receive generously." — Luke 6:38',
+    // What the registration fee covers (default list; an event can override it)
+    costTitle: 'Your fee covers everything',
+    costSub: 'Everything below is already included in the price:',
+    costItems: [
+      { icon: '🚐', label: 'Round-trip transportation' },
+      { icon: '🏨', label: 'Lodging' },
+      { icon: '🍽️', label: 'All meals' },
+      { icon: '🥐', label: 'Breakfast on the way there' },
+      { icon: '🍝', label: 'Dinner on the way home' },
+    ],
+    // Costs NOT included in the fee — paid separately at the mountain
+    costExtraTitle: 'Additional costs (not included)',
+    costExtraSub: 'These are paid separately, directly at the mountain:',
+    costExtraItems: [
+      { icon: '🎟️', label: 'Lift ticket — about $130 per day' },
+      { icon: '🎿', label: 'Equipment rental (skis or snowboard) — about $50 per day' },
+    ],
     feeSkier: 'Skier registration fee',
     feeProcessing: 'Processing fee',
     feeTotal: 'TOTAL',

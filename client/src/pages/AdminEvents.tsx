@@ -20,6 +20,7 @@ import logo from '../assets/logo.jpeg'
 const emptyEvent: Partial<SkiEvent> = {
   id: '', name: '', date: '', location: '', price: 0,
   badge: false, badgeText: '', active: true, capacity: 0, deposit: 0,
+  costIncludes: '', costExtra: '',
 }
 
 function toSlug(text: string): string {
@@ -271,6 +272,34 @@ export default function AdminEvents() {
                              text-white text-sm focus:outline-none focus:border-glacier" />
                 <p className="text-[10px] text-slate-500 mt-1">
                   Max registrations. Set to 0 for unlimited.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">What's included</label>
+                <textarea value={editing.costIncludes || ''}
+                  onChange={(e) => set('costIncludes', e.target.value)}
+                  rows={5}
+                  placeholder={'Transporte ida y vuelta\nHospedaje\nTodas las comidas\nDesayuno camino al evento\nCena de regreso'}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                             text-white text-sm focus:outline-none focus:border-glacier resize-y" />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  One item per line. Shown at checkout so participants know what the fee covers.
+                  Leave blank to use the default list (ride, lodging, meals, breakfast, dinner).
+                </p>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Additional costs (not included)</label>
+                <textarea value={editing.costExtra || ''}
+                  onChange={(e) => set('costExtra', e.target.value)}
+                  rows={3}
+                  placeholder={'Boleto de telesilla (lift) — aprox. $130 por día\nRenta de equipo (esquís o snowboard) — aprox. $50 por día'}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+                             text-white text-sm focus:outline-none focus:border-glacier resize-y" />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  One item per line. Costs paid separately at the mountain (lift ticket, rentals).
+                  Leave blank to use the default list (lift ~$130/day, equipment ~$50/day).
                 </p>
               </div>
 

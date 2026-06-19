@@ -8,6 +8,7 @@ import { isValidPhone } from '../../lib/phone'
 import { isValidEmail } from '../../lib/email'
 import StepProgress from '../ui/StepProgress'
 import ReturningUserPrompt from './ReturningUserPrompt'
+import { getMedicalErrors } from './MedicalQuestions'
 import Step1Personal from './Step1Personal'
 import Step2Emergency from './Step2Emergency'
 import Step3Level from './Step3Level'
@@ -52,6 +53,14 @@ function validate(step: number, formData: FormData, t: ReturnType<typeof import(
   }
   if (formStep === 2) {
     if (!formData.skillLevel) errors.skillLevel = t.skillRequired
+  }
+  if (formStep === 3) {
+    // A "yes" answer requires a description — for the registrant and each minor.
+    Object.assign(errors, getMedicalErrors(formData, t.required))
+    formData.minors.forEach((m, i) => {
+      const med = getMedicalErrors(m, t.required)
+      for (const key in med) errors[`minor${i}.${key}`] = med[key as keyof typeof med]!
+    })
   }
   if (formStep === 4) {
     if (!formData.liabilityAccepted || !formData.medicalAccepted) errors.waivers = t.acceptBoth

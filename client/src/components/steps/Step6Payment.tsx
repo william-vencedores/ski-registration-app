@@ -4,6 +4,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { zelleConfig } from '../../lib/config'
+import CostIncluded from '../ui/CostIncluded'
 import axios from 'axios'
 
 // Replace with your Stripe publishable key
@@ -150,7 +151,7 @@ export default function Step6Payment() {
   const { t } = useTranslation()
   const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId, setPaymentInfo } = useAppStore()
   const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
-  const [method, setMethod] = useState<'card' | 'zelle'>('card')
+  const [method, setMethod] = useState<'card' | 'zelle'>('zelle')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -218,20 +219,13 @@ export default function Step6Payment() {
     <div className="flex flex-col gap-5">
       <div className="card-verse">{t.s6Verse}</div>
 
+      {/* What the fee covers — ride, lodging, meals, etc. */}
+      <CostIncluded />
+
       {/* Payment method selector */}
       <div>
         <label className="form-label">{t.payMethodLabel}</label>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => { setMethod('card'); setError('') }}
-            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-all
-              ${method === 'card'
-                ? 'bg-white text-slate-900 border-glacier shadow-sm'
-                : 'bg-transparent text-slate-500 border-black/10 hover:text-slate-700'}`}
-          >
-            {t.payCard}
-          </button>
           <button
             type="button"
             onClick={() => { setMethod('zelle'); setError('') }}
@@ -241,6 +235,16 @@ export default function Step6Payment() {
                 : 'bg-transparent text-slate-500 border-black/10 hover:text-slate-700'}`}
           >
             🏦 {t.payZelle}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMethod('card'); setError('') }}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-all
+              ${method === 'card'
+                ? 'bg-white text-slate-900 border-glacier shadow-sm'
+                : 'bg-transparent text-slate-500 border-black/10 hover:text-slate-700'}`}
+          >
+            {t.payCard}
           </button>
         </div>
       </div>

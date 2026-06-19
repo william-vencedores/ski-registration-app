@@ -1,6 +1,6 @@
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
-import type { Minor } from '../../lib/events'
+import { emptyMinor, type Minor } from '../../lib/events'
 import { formatPhone } from '../../lib/phone'
 
 interface Props {
@@ -32,7 +32,7 @@ export default function Step1Personal({ errors }: Props) {
   )
 
   const addMinor = () =>
-    setFormData({ minors: [...formData.minors, { firstName: '', lastName: '', dob: '' }] })
+    setFormData({ minors: [...formData.minors, { ...emptyMinor }] })
 
   const removeMinor = (index: number) =>
     setFormData({ minors: formData.minors.filter((_, i) => i !== index) })

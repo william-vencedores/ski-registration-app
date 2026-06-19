@@ -27,6 +27,8 @@ export async function createEvent(req: CreateEventRequest): Promise<Record<strin
     badgeText: req.badgeText ?? '',
     active: req.active,
     deposit: req.deposit ?? 0,
+    costIncludes: req.costIncludes ?? '',
+    costExtra: req.costExtra ?? '',
     createdAt: now,
     updatedAt: now,
   };
@@ -89,6 +91,12 @@ export async function updateEvent(
   }
   if (req.deposit != null) {
     item.deposit = req.deposit;
+  }
+  if (req.costIncludes != null) {
+    item.costIncludes = req.costIncludes;
+  }
+  if (req.costExtra != null) {
+    item.costExtra = req.costExtra;
   }
   item.updatedAt = now;
 
@@ -182,6 +190,8 @@ function itemToEventMap(item: Record<string, unknown>): Record<string, unknown> 
     capacity: (item.capacity as number) ?? 0,
     spotsLeft: (item.spotsLeft as number) ?? 0,
     deposit: item.deposit ?? 0,
+    costIncludes: item.costIncludes ?? '',
+    costExtra: item.costExtra ?? '',
     createdAt: item.createdAt ?? '',
     updatedAt: item.updatedAt ?? '',
   };

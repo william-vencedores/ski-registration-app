@@ -16,6 +16,12 @@ export interface CreateEventRequest {
   active: boolean;
   capacity?: number;
   deposit?: number;
+  // Optional per-event override for the "what's included" list shown at checkout
+  // (one item per line). When empty, the client falls back to its default list.
+  costIncludes?: string;
+  // Optional per-event override for the "additional costs (not included)" list
+  // (one item per line). When empty, the client falls back to its default list.
+  costExtra?: string;
 }
 
 export interface CreatePaymentIntentRequest {
@@ -65,6 +71,14 @@ export interface MinorInput {
   firstName: string;
   lastName: string;
   dob: string;
+  // Per-minor medical info (optional for backward compatibility with older
+  // clients that only sent name + dob).
+  medConditions?: string;
+  conditionDetails?: string;
+  medAllergies?: string;
+  allergyDetails?: string;
+  medMedications?: string;
+  medicationDetails?: string;
 }
 
 export interface AddMinorsRequest {

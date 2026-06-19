@@ -4,8 +4,10 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useAppStore } from '../../lib/store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { zelleConfig } from '../../lib/config'
+import CostIncluded from '../ui/CostIncluded'
+import MedicalQuestions, { getMedicalErrors } from './MedicalQuestions'
 import { createMinorsPaymentIntent, addMinors } from '../../lib/returningApi'
-import { useEventDisclosures, type Minor } from '../../lib/events'
+import { useEventDisclosures, emptyMinor, type Minor } from '../../lib/events'
 
 type Acceptance = { disclosureId: string; version: number }
 
@@ -46,6 +48,7 @@ function MinorCardCheckout({
   chargeTotal,
   acceptances,
   waiversAccepted,
+  validateMed,
   onSuccess,
 }: {
   guardianRegId: string
@@ -54,6 +57,7 @@ function MinorCardCheckout({
   chargeTotal: number
   acceptances: Acceptance[]
   waiversAccepted: boolean
+  validateMed: () => boolean
   onSuccess: () => void
 }) {
   const stripe = useStripe()
@@ -65,6 +69,7 @@ function MinorCardCheckout({
   const handlePay = async () => {
     if (!stripe || !elements) return
     if (!minorsValid(minors)) { setError(t.addMinorNeedOne); return }
+    if (!validateMed()) { setError(''); return }
     if (!waiversAccepted) { setError(t.acceptWaivers); return }
     setLoading(true)
     setError('')
@@ -142,13 +147,26 @@ function MinorCardCheckout({
 export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props) {
   const { t, lang } = useTranslation()
   const { selectedEvent } = useAppStore()
-  const [minors, setMinors] = useState<Minor[]>([{ firstName: '', lastName: '', dob: '' }])
-  const [method, setMethod] = useState<'card' | 'zelle'>('card')
+  const [minors, setMinors] = useState<Minor[]>([{ ...emptyMinor }])
+  const [method, setMethod] = useState<'card' | 'zelle'>('zelle')
   const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { disclosures } = useEventDisclosures(selectedEvent?.id)
   const [accepted, setAccepted] = useState<Record<string, boolean>>({})
+  const [medErrors, setMedErrors] = useState<Record<string, string>>({})
+
+  // A "yes" answer to any medical question requires a description. Populates the
+  // per-minor inline errors and returns whether all minors are valid.
+  const validateMinorMedical = () => {
+    const errs: Record<string, string> = {}
+    minors.forEach((m, i) => {
+      const med = getMedicalErrors(m, t.required)
+      for (const key in med) errs[`minor${i}.${key}`] = med[key as keyof typeof med]!
+    })
+    setMedErrors(errs)
+    return Object.keys(errs).length === 0
+  }
 
   if (!selectedEvent) return null
 
@@ -172,13 +190,14 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
   const amountCents = Math.round(chargeTotal * 100)
   const remaining = paymentType === 'deposit' && hasDeposit ? (fullPrice - baseAmount) * count : 0
 
-  const addMinor = () => setMinors([...minors, { firstName: '', lastName: '', dob: '' }])
+  const addMinor = () => setMinors([...minors, { ...emptyMinor }])
   const removeMinor = (i: number) => setMinors(minors.filter((_, idx) => idx !== i))
   const updateMinor = (i: number, patch: Partial<Minor>) =>
     setMinors(minors.map((m, idx) => (idx === i ? { ...m, ...patch } : m)))
 
   const handleZelleSubmit = async () => {
     if (!minorsValid(minors)) { setError(t.addMinorNeedOne); return }
+    if (!validateMinorMedical()) { setError(''); return }
     if (!waiversAccepted) { setError(t.acceptWaivers); return }
     setLoading(true)
     setError('')
@@ -250,6 +269,16 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
                 {minorInput(i, 'dob', t.minorDob, 'date')}
               </div>
             </div>
+
+            {/* Medical info for this minor */}
+            <div className="mt-4">
+              <MedicalQuestions
+                values={minors[i]}
+                onChange={(patch) => updateMinor(i, patch)}
+                errors={medErrors}
+                errorPrefix={`minor${i}.`}
+              />
+            </div>
           </div>
         ))}
         <button
@@ -289,18 +318,13 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
         </div>
       )}
 
+      {/* What the fee covers + additional costs paid at the mountain */}
+      <CostIncluded />
+
       {/* Payment method selector */}
       <div>
         <label className="form-label">{t.payMethodLabel}</label>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => { setMethod('card'); setError('') }}
-            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-all
-              ${method === 'card' ? 'bg-white text-slate-900 border-glacier shadow-sm' : 'bg-transparent text-slate-500 border-black/10 hover:text-slate-700'}`}
-          >
-            {t.payCard}
-          </button>
           <button
             type="button"
             onClick={() => { setMethod('zelle'); setError('') }}
@@ -308,6 +332,14 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
               ${method === 'zelle' ? 'bg-white text-slate-900 border-glacier shadow-sm' : 'bg-transparent text-slate-500 border-black/10 hover:text-slate-700'}`}
           >
             🏦 {t.payZelle}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMethod('card'); setError('') }}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-all
+              ${method === 'card' ? 'bg-white text-slate-900 border-glacier shadow-sm' : 'bg-transparent text-slate-500 border-black/10 hover:text-slate-700'}`}
+          >
+            {t.payCard}
           </button>
         </div>
       </div>
@@ -371,6 +403,7 @@ export default function AddMinorFlow({ guardianRegId, onBack, onSuccess }: Props
             chargeTotal={chargeTotal}
             acceptances={acceptances}
             waiversAccepted={waiversAccepted}
+            validateMed={validateMinorMedical}
             onSuccess={onSuccess}
           />
         </Elements>
