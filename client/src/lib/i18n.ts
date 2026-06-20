@@ -79,7 +79,7 @@ export const translations = {
     costItems: [
       { icon: '🚐', label: 'Transporte ida y vuelta' },
       { icon: '🏨', label: 'Hospedaje' },
-      { icon: '🍽️', label: 'Todas las comidas' },
+      { icon: '🍽️', label: 'Todas las comidas (excepto en la montaña)' },
       { icon: '🥐', label: 'Desayuno camino al evento' },
       { icon: '🍝', label: 'Cena de regreso a casa' },
     ],
@@ -251,7 +251,7 @@ export const translations = {
     costItems: [
       { icon: '🚐', label: 'Round-trip transportation' },
       { icon: '🏨', label: 'Lodging' },
-      { icon: '🍽️', label: 'All meals' },
+      { icon: '🍽️', label: 'All meals (except on the mountain)' },
       { icon: '🥐', label: 'Breakfast on the way there' },
       { icon: '🍝', label: 'Dinner on the way home' },
     ],

@@ -150,12 +150,14 @@ function CardCheckout({ paymentType, hasDeposit, chargeTotal }: CardCheckoutProp
 export default function Step6Payment() {
   const { t } = useTranslation()
   const { selectedEvent, formData, disclosureAcceptances, setCurrentStep, setConfirmationId, setPaymentInfo } = useAppStore()
-  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('full')
+  const hasDeposit = !!selectedEvent && (selectedEvent.deposit ?? 0) > 0
+
+  // Default to the deposit when the event offers one — most people register and
+  // pay only the deposit up front, settling the balance later.
+  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>(hasDeposit ? 'deposit' : 'full')
   const [method, setMethod] = useState<'card' | 'zelle'>('zelle')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const hasDeposit = !!selectedEvent && (selectedEvent.deposit ?? 0) > 0
 
   // Headcount = the registrant plus any minors they bring. Every head pays the
   // same per-person price. Must mirror the server calculation.
