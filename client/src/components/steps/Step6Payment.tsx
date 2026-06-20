@@ -267,16 +267,6 @@ export default function Step6Payment() {
           <div className="bg-[#f0f5fa] px-5 py-3 flex gap-2 border-b border-black/8">
             <button
               type="button"
-              onClick={() => setPaymentType('full')}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
-                ${paymentType === 'full'
-                  ? 'bg-white text-slate-900 border-glacier shadow-sm'
-                  : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
-            >
-              {t.payFull}
-            </button>
-            <button
-              type="button"
               onClick={() => setPaymentType('deposit')}
               className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
                 ${paymentType === 'deposit'
@@ -284,6 +274,16 @@ export default function Step6Payment() {
                   : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
             >
               {t.payDeposit}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentType('full')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all
+                ${paymentType === 'full'
+                  ? 'bg-white text-slate-900 border-glacier shadow-sm'
+                  : 'bg-transparent text-slate-500 border-transparent hover:text-slate-700'}`}
+            >
+              {t.payFull}
             </button>
           </div>
         )}
